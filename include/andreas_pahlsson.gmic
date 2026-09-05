@@ -1,0 +1,139 @@
+#@gmic
+#
+# Pahlsson_descreen - script to clean up raster screen artifacts from high resolution scans.
+#
+# MODUS OPERANDI
+# TL;DR: Find dominant frequencies and filter them out.
+#
+# * Separate to CMYK-channels. Makes sense for printed materials but was actually introduced to
+#   minimize RAM usage on very large images.
+# * FFT each channel, keep real part.
+# * DOG for peak detection.
+# * Create mask based on peaks with blur.
+# * iFFT and recombine.
+
+# Channels and images are named for easier management and debugging.
+# TODO: Find condition not to apply mask.
+
+#@gui _<b>Repair</b>
+
+
+#@gui Descreen : fx_pahlsson_descreen, fx_pahlsson_descreen_preview(0)
+#@gui : Circle Radius (%) = float(7,0,100)
+#@gui : Cross Length (%) = float(40,0,100)
+#@gui : Cross Width (%) = float(1,0,100)
+#@gui : sep = separator(), Preview type = choice("Full","Forward horizontal","Forward vertical","Backward horizontal","Backward vertical","Duplicate top","Duplicate left","Duplicate bottom","Duplicate right","Duplicate horizontal","Duplicate vertical","Checkered","Checkered inverse")
+#@gui : sep = separator(), note = note("<small>Author: <i>Andreas P&#229;hlsson</i>.      Latest update: <i>2026/04/08</i>.</small>")
+fx_pahlsson_descreen :
+  pahlsson_descreen ${1-3}
+
+fx_pahlsson_descreen_preview :
+  gui_split_preview "fx_pahlsson_descreen $*",$-1
+
+pahlsson_descreen : check "inrange(${1=7},0,100) && inrange(${2=40},0,100) && inrange(${3=1},0,100)"
+  repeat $! l[$>] split_opacity l[0] to_rgb
+    rgb2cmyk
+    split c
+    name[-4] C
+    pahlsson_descreen_channel[-4] $*
+    name... M
+    pahlsson_descreen_channel... $*
+    name.. Y
+    pahlsson_descreen_channel.. $*
+    name. K
+    pahlsson_descreen_channel. $*
+    append c
+    cmyk2rgb
+  done a c done done
+
+pahlsson_descreen_channel : check "inrange(${1=7},0,100) && inrange(${2=40},0,100) && inrange(${3=1},0,100)"
+ # Keep the basename around for debugging purposes
+ basename={0,b}
+ name[0] original
+ # Get original dimensions.
+ crop1=0,0,{original,w-1},{original,h-1},0
+ crop2=0,{original,h},100%,100%,0
+ float2fft8[original]
+ name[original] fft
+ # Clone the image to split in real/imaginary parts for later recombination.
+ i [fft]
+ name.. real
+ name. imaginary
+ crop[real] $crop1
+ crop[imaginary] $crop2
+ # Build a mask.
+ i [real]
+ name. mask
+ # Peak detection with DOG. Maybe not the best way. Does work though.
+ # Factor of 1.6x, size relative to image. Not great for small images.
+ dog[mask] 0.5%,0.8%
+ normalize[mask] 0,255
+ threshold[mask] 64
+ normalize[mask] 0,255
+ negate[mask]
+ # Make sure the center is not masked.
+ if $1 ellipse[mask] 50%,50%,$1%,$1%,255,255,255,255 fi
+ if $2" || "$3
+   ellipse[mask] 50%,50%,$2%,$3%,0,255,255,255
+   ellipse[mask] 50%,50%,$3%,$2%,0,255,255,255
+ fi
+
+ # Make a blur mask. Not entirely sure why this is a good thing.
+ i [mask]
+ name. blurmask
+ blur[blurmask] 1.6%
+ normalize[blurmask] 0,255
+ # Merge mask and blurmask
+ mul[mask,blurmask]
+ div[mask] 256
+ # Apply the mask to the real part.
+ mul[mask,real]
+ div[real] 256 # Compensate for multiplication
+ # Recombine real with mask and imaginary part.
+ append[real] [imaginary],y
+ name[real] fft
+ remove[imaginary]
+ # Inverse the FFT
+ fft82float[fft]
+
+#@cli float2int8
+#@cli : Convert selected float-valued images to 8bits integer representations.
+float2int8 :
+  e[^-1] "Convert float-valued image$? to 8bits integer representations."
+  repeat $! l[$>]
+    s c repeat $! l[$>]
+      m={im} M={iM} quantize 16777216,0,1
+      +>> 8 &. 255 +&.. 255 >>... 16
+      ({'$m,$M'}) a y
+    done done a c
+  done done
+
+#@cli int82float
+#@cli : Convert selected 8bits integer representations to float-valued images.
+int82float :
+  e[^-1] "Convert 8bits integer representation$? to float-valued image$?."
+  repeat $! l[$>]
+    s c repeat $! l[$>]
+      sh. {h-1},{h-1},0,0 m={t} rm.
+      rows 0,{h-2} s y,3 *... 65536 *.. 256 -|
+      skip ${n\ $m}
+    done done a c
+  done done
+
+#@cli float2fft8
+#@cli : Convert selected float-valued images to 8bits fourier representations.
+float2fft8 :
+  e[^-1] "Convert float-valued image$? to 8bits fourier representations."
+  repeat $! l[$>]
+    fftpolar +.. 1 log.. float2int8[-2,-1] a y
+  done done
+
+#@cli fft82float
+#@cli : Convert selected 8bits fourier representations to float-valued images.
+fft82float :
+  e[^-1] "Convert float-valued image$? to 8bits fourier representations."
+  repeat $! l[$>]
+    s y,2 int82float exp.. -.. 1 ifftpolar
+  done done
+
+# (End of G'MIC custom commands)

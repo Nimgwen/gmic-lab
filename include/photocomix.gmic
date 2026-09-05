@@ -1,0 +1,1435 @@
+#@gmic
+
+#-------------------
+# Released filters
+#-------------------
+
+########################################################################
+#@gui _<b>Artistic</b>
+
+#########################################################################
+###############         *GRAPHIC NOVEL*          ########################
+#########################################################################
+
+#@gui Graphic Novel  : fx_graphic_novelfxl, fx_graphic_novelfxl(0)
+#@gui : sep = separator ()
+#@gui : note = note("Apply Local Normalization")
+#@gui : Skip This Step = bool(false)
+
+#@gui : sep = separator ()
+#@gui : note = note("Local Normalization Controls")
+#@gui : LN Amplititude = float(2,0,60)
+#@gui : LN Size = float(6,0,64)
+#@gui : LN Neightborhood-Smoothness = float(5,0,40)
+#@gui : LN Average-Smoothness = float(20,0,40)
+#@gui : sep = separator()
+
+#@gui : Skip All Other Steps = bool(false)
+
+#@gui : sep = separator()
+#@gui : sep = separator()
+#@gui : note = note("Pencil Options")
+#@gui : Pencil Size = float(0.62,0,4)
+#@gui : Pencil Amplitude = float(14,0,200)
+#@gui : sep = separator()
+
+#@gui : Skip All Other Steps = bool(false)
+
+#@gui : sep = separator()
+#@gui : sep = separator()
+
+#@gui : Activate 'Pencil Smoother' = bool(true)
+#@gui : note = note("If unchecked the 3 sliders below are disabled")
+#@gui : sep = separator()
+#@gui : Pencil Smoother Sharpness = float(0.5,0,2)
+#@gui : Pencil Smoother Edge Protection = float(0.78,0,1)
+#@gui : Pencil Smoother Smoothness = float(1.92,0,10)
+
+#@gui : sep = separator()
+
+#@gui : Skip All Other Steps = bool(false)
+
+#@gui : sep = separator ()
+#@gui : sep = separator()
+#@gui : note = note ("Boost Merging Options")
+#@gui : Swap Layers = bool (false)
+#@gui : MIxer = choice("Overlay","Multiply","Soft light","Color Burn","Darken","Stamp","Hard Light","Value","Grain Merge","Freeze","Lightness","Luminance","*Colors Doping","*Comix Colors*","Graphic Colours","*Graphix Colors","*Vivid Edges*","*Dark Edges*","*Dark Screen*","*Vivid Screen*","Interpolate")
+#@gui : Opacity = float(1,0,1)
+#@gui : Intensity = float(1,0,1)
+
+#@gui : sep = separator ()
+#@gui : Add Painter's Touch = bool(true)
+
+#@gui : sep = separator ()
+#@gui : Painter's Touch Sharpness = float(0.5,0,2)
+#@gui : Painter's Edge Protection Flow = float(0.8,0,1)
+#@gui : Painter's Smoothness =float(1.28,0,10)
+#@gui : sep = separator(), note = note("<small>Author: <i>PhotoComiX</i>. Latest update : <i>2011/13/11</i>.</small>")
+#@gui : note = link("Filter explained here","http://www.gimpchat.com/viewtopic.php?f=9&t=1582")
+fx_graphic_novelfxl :
+  repeat $! l[$>] split_opacity l[0]
+    if $1==0 fx_normalize_local $2,$3,$4,$5,1,3,0 fi
+    if $6==0 +fx_pencilbw $7,$8,0,0,0 fi
+ if $9==1 k. break fi
+      if $10==1 fx_smooth_anisotropic. 60,$11,$12,$13,1.1,0.8,30,2,0,1,1,0 fi
+   if $14==1 k. break fi
+   if $15==1 reverse fi
+
+      if $16==0 fx_compose_overlay $17,0
+      elif $16==1 fx_compose_multiply $17,0
+      elif $16==2 fx_compose_softlight $17,0
+      elif $16==3 fx_compose_colorburn $17,0
+      elif $16==4 fx_compose_darken $17,0
+      elif $16==5 fx_compose_stamp $17,0
+      elif $16==6 fx_compose_hardlight $17,0
+      elif $16==7 fx_compose_value $17,1
+      elif $16==8 fx_compose_grainmerge $17,0
+   elif $16==9 fx_compose_freeze $17,0
+   elif $16==10 fx_compose_lightness $17,1
+   elif $16==11 fx_compose_luminance $17,1
+   elif $16==12 fx_compose_colordoping $17,0
+   elif $16==13 fx_compose_comix_color $17,0,$18
+   elif $16==14 fx_compose_graphicolor $17,0,$18
+   elif $16==15 fx_compose_graphixcolor $17,0
+   elif $16==16 fx_compose_vividedges $17,0.50,0,$18
+   elif $16==17 fx_compose_darkedges $17,0.50,0,$18
+   elif $16==18 fx_compose_vividscreen $17,0,$18
+   elif $16==19 fx_compose_darkscreen $17,0,$18
+   elif $16==20 fx_compose_interpolation $17,0 fi
+      if $19==1 fx_smooth_anisotropic 60,$20,$21,$22,1.1,0.8,30,2,0,1,1,0 fi
+
+  done a c done done
+
+#########################################################################
+###############         *GRAPHIC BOOST*          ########################
+#########################################################################
+
+#@gui Graphic Boost : fx_graphic_boost4, fx_graphic_boost4(0)
+#@gui : sep = separator ()
+#@gui : note = note("Unsharp Mask controls")
+#@gui : Radius = float(1.25,0,20)
+#@gui : Darken = float(2,0,10)
+#@gui : sep = separator()
+#@gui : Skip Others Steps = bool(false)
+#@gui : note = note("Check for visual control, UNcheck to reactivate the other controls")
+#@gui : sep = separator()
+#@gui : sep = separator()
+#@gui : note = note("BW_Pencil Controls")
+#@gui : Pencil Size = float(0.15,0,4)
+#@gui : Pencil Amplitude = float(14,0,200)
+#@gui : sep = separator()
+#@gui : Skip Others Steps = bool(false)
+#@gui : sep = separator ()
+#@gui : sep = separator ()
+
+#@gui : Activate 'Pencil Smoother' = bool(true)
+#@gui : note = note("If unchecked the 3 sliders below are disabled")
+#@gui : Pencil Smoother Sharpness = float(0.5,0,2)
+#@gui : Pencil Smoother Edge Protection = float(0.45,0,1)
+#@gui : Pencil Smoother Smoothness = float (2,0,10)
+#@gui : sep = separator()
+#@gui : Skip Others Steps = bool(false)
+#@gui : sep = separator ()
+#@gui : sep = separator ()
+
+#@gui : note = note("Merging Options")
+#@gui : Swap Layers = bool (True)
+#@gui : note = note ("'Swap' change the effect of Merging and Intesity")
+#@gui : Merging Option = choice("Hard Light","Grain Merge","Multiply","Color Burn","Overlay","Value","Darken","Lightness","Luminance","*Colors Doping*","Comix Colors","Graphic Colours","Graphix Colors","Vivid Edges*","Dark Edges","Dark Screen","Vivid Screen","Interpolate")
+#@gui : Opacity = float(1,0,1)
+#@gui : Intensity = float(1,0,1)
+#@gui : sep = separator ()
+#@gui : Add Painter's Touch = bool(true)
+#@gui : note = note("If unchecked the 3 sliders below are disabled")
+#@gui : sep = separator ()
+#@gui : Painter's Touch Sharpness = float(0.5,0,2)
+#@gui : Painter's Edge Protection Flow = float(0.45,0,1)
+#@gui : Painter's Smoothness =float(1,0,10)
+#@gui : sep = separator(), note = note("<small>Author: <i>PhotoComiX</i>. Latest update : <i>2011/13/11 </i>.</small>")
+#@gui : note = link("Filter explained here","http://www.gimpchat.com/viewtopic.php?f=9&t=775")
+
+fx_graphic_boost4 :
+ repeat $! l[$>] split_opacity l[0]
+
+ fx_unsharp 1,$1,30,3,0,$2,0.40,1,0,0,0
+ if $3==1 break fi
+    +fx_pencilbw $4,$5,0,0,0
+ if $6==1 k. break fi
+
+    if $7==1 fx_smooth_anisotropic[1] 60,$8,$9,$10,1.1,0.8,30,2,0,1,1,0 fi
+ if $11==1 k. break fi
+
+    if $12==1  reverse fi
+
+    if $13==0 fx_compose_hardlight $14,0
+ elif $13==1 fx_compose_grainmerge $14,0
+    elif $13==2 fx_compose_multiply $14,0
+    elif $13==3 fx_compose_colorburn $14,0
+    elif $13==4 fx_compose_overlay $14,0
+    elif $13==5 fx_compose_value $14,1
+    elif $13==6 fx_compose_darken $14,0
+    elif $13==7 fx_compose_lightness $14,1
+ elif $13==8 fx_compose_luminance $14,1
+ elif $13==9 fx_compose_colordoping $14,0
+ elif $13==10 fx_compose_comix_color $14,0,$15
+ elif $13==11 fx_compose_graphicolor $14,0,$15
+ elif $13==12 fx_compose_graphixcolor $14,0
+ elif $13==13 fx_compose_vividedges $14,0.50,0,$15
+ elif $13==14 fx_compose_darkedges $14,0.50,0,$15
+ elif $13==15 fx_compose_vividscreen $14,0,$15
+ elif $13==16 fx_compose_darkscreen $14,0,$15
+ elif $13==17 fx_compose_interpolation $14,0 fi
+    if $16==1 fx_smooth_anisotropic 60,$17,$18,$19,1.1,0.8,30,2,0,1,1,0 fi
+  done a c done done
+
+#############################################################################################################
+##########################                       COLORED PENCILS             ################################
+#############################################################################################################
+#@gui Colored Pencils : fx_cpencil, fx_cpencil_preview(0)
+#@gui : Size = float(1.3,0,5)
+#@gui : Amplitude = float(50,0,200)
+#@gui : Quantize Colors = int (20,2,255)
+#@gui : Color Smoothness = float(2,0,30)
+#@gui : Mixer Mode = choice(2,"Color Doping","Darken","Hard Light","Grain Merge","Lightness","Multiply","Soft Light","Value")
+#@gui : Color Intensity =float (1,0,1)
+#@gui : sep = separator(), Preview type = choice("Full","Forward horizontal","Forward vertical","Backward horizontal","Backward vertical","Duplicate top","Duplicate left","Duplicate bottom","Duplicate right","Duplicate horizontal","Duplicate vertical","Checkered","Checkered inverse")
+#@gui : sep = separator(), note = note("<small>Author: <i>PhotoComiX</i>.      Latest update : <i>2010/29/12</i>.</small>")
+fx_cpencil :
+repeat $! l[$>] split_opacity l[0]
+  +pencilbw $1,$2 b. xy,0.4
+  quantize.. $3 n 0,255 to_rgb
+  b.. xy,$4
+  if $5==0 fx_compose_colordoping $6,0
+  elif $5==1 fx_compose_darken $6,1
+  elif $5==2 fx_compose_hardlight $6,0
+  elif $5==3 fx_compose_grainmerge $6,0
+  elif $5==4 fx_compose_lightness $6,1
+  elif $5==5 fx_compose_multiply $6,0
+  elif $5==6 fx_compose_softlight $6,0
+  elif $5==7 fx_compose_value $6,1 fi
+  done a c done done
+
+fx_cpencil_preview :
+  gui_split_preview "fx_cpencil ${1--2}",$-1
+
+#######################################################################
+##################            SEAMLESS Deco       #####################
+#######################################################################
+#@gui _<b>Patterns</b>
+
+#@gui  Seamless Deco : fx_mad_rorscharchp,fx_mad_rorscharchp
+#@gui : Scale = float(3,0,15)
+#@gui : Mixer = choice ("Average","Grain Extract","Vivid Edges","Difference","Exclusion","Negation")
+#@gui : sep = separator()
+#@gui : Line = float(50,0,100)
+#@gui : Smoothness = float(1,0,5)
+#@gui : Sharpen = float(300,0,1000)
+#@gui : sep = separator()
+#
+#@gui : Remix = choice ("Vivid Edges","Average","Difference","Negation","Dark Edges")
+#@gui : PhotoComix Preset = choice("Neat Merge","Lighty Smooth","Dream","Moody","Soft","Naif","Dark Boost","Whitening","None- Skip")
+
+#@gui : Activate Mirror = choice ("No-Skip", XY Mirror","2XY Mirror")
+
+#@gui : sep = separator()
+#@gui : note = note("WARNING,'Expanding Mirrors' multiply image size of x4 or if '2XY Mirrors' x9")
+#@gui : sep = separator()
+#@gui : Expanding Mirrors = bool(0)
+#@gui : sep = separator(), note = note("<small>Author: <i>PhotoComix</i>.      Latest update : <i>2011/13/11</i>.</small>")
+
+fx_mad_rorscharchp :
+fx_rorschach $1,1,1
++mirror y
+if $2==0 fx_compose_average 1,0
+elif $2==1 fx_compose_grainextract 1,0
+elif $2==1 fx_compose_vividedges 1,1,0.5,1 fi
+
++fx_plaid_texture $3,2,0,90,$4,$5
+if $6==0 fx_compose_vividedges 1,1,0.5,1
+elif $6==1 fx_compose_average 1,0
+elif $6==2 fx_compose_difference 1,0
+elif $6==3 fx_compose_negation 1,0
+elif $6==4 fx_compose_negation 1,0
+elif $6==5 fx_compose_darkedges 1,1,0.8,1 fi
+
+if $7==0 fx_graphic_novelfxl 0,2,6,5,20,0,0.62,14,0,1,0.5,0.78,1.92,0,0,12,1,1,1,0.5,0.8,1.28,1.25,2,0,0.15,14,0,1,0.5,0.45,2,0,1,0,1,1,1,0.5,0.45,1
+elif $7==1 fx_graphic_novelfxl 0,7.2,14.65,5,20,0,1.06,36.14,0,1,0.5,0.85,1.93,0,0,8,1,1,1,0.5,0.95,2.89,1.25,2,0,0.15,14,0,1,0.5,0.45,2,0,1,0,1,1,1,0.5,0.45,1
+elif $7==2 fx_graphic_novelfxl 0,7.22892,14.6506,5,20,0,1.6,36.1,0,1,0.5,0.6,3.6,0,0,11,1,1,1,0.5,0.8,2.16,1.25,2,0,0.15,14,0,1,0.5,0.45,2,0,1,7,1,1,1,0.5,0.45,1
+elif $7==3  fx_graphic_novelfxl 0,7.22892,14.6506,5,20,0,1.59036,36.1446,0,1,0.5,0.590361,3.61446,0,1,17,1,1,1,0.5,0.795181,2.16867,1.25,2,0,0.15,14,0,1,0.5,0.45,2,0,1,7,1,1,1,0.5,0.45,1
+elif $7==4 fx_graphic_novelfxl 0,7.22892,14.6506,5,20,0,1.59036,36.1446,0,1,0.5,0.855422,1.92771,0,0,8,1,1,1,0.5,0.373494,2.89157,1.25,2,0,0.15,14,0,1,0.5,0.45,2,0,1,0,1,1,1,0.5,0.45,1
+elif $7==5 fx_graphic_novelfxl 1,7.22892,14.6506,5,20,0,1.06024,14,0,1,0.5,0.855422,1.3253,0,0,12,1,1,1,0.5,0.8,1.28,1.25,2,0,0.15,14,0,1,0.5,0.45,2,0,1,0,1,1,1,0.5,0.45,1
+elif $7==6 fx_graphic_novelfxl 1,7.22892,14.6506,5,20,0,1.06024,36.1446,0,1,0.5,0.855422,1.92771,0,0,7,1,1,1,0.5,0.951807,1.92771,1.25,2,0,0.15,14,0,1,0.5,0.45,2,0,1,0,1,1,1,0.5,0.45,1
+elif $7==7 fx_graphic_novelfxl 1,7.22892,14.6506,5,20,0,1.59036,36.1446,0,1,0.5,0.590361,3.61446,0,1,18,1,1,1,0.5,0.795181,2.16867,1.25,2,0,0.15,14,0,1,0.5,0.45,2,0,1,0,1,1,1,0.5,0.45,1 fi
+
+if $8==1 fx_array_mirror 1,0,0,2,0,$9,0
+elif $8==2 fx_array_mirror 1,0,0,3,0,$9,0 fi
+
+#-------------------
+# Testing filters
+#-------------------
+
+#@gui _<b>Testing</b>
+#@gui <i>PhotoComix</i>
+
+###################################################################################################
+################################   POSTERIZED DITHERING   #########################################
+###################################################################################################
+#@gui Posterized Dithering : fx_pdithered, fx_pdithered_preview(0)
+#@gui : Gamma = float(1,0.01,5)
+#@gui : Contrast = float(1,0,4)
+#@gui : Brightness = float(0,-255,255)
+#@gui : Smoothness = float(0,0,10)
+#@gui : Quantize Colors = int(20,2,255)
+#@gui : Smooth Colors =float(1,0,30)
+#@gui : Mixer Mode = choice("Color Doping","Darken","Soft Light","Grain Merge","Multiply","Value")
+#@gui : Color Intensity =float (1,0,1)
+#@gui : sep = separator(), Preview type = choice("Full","Forward horizontal","Forward vertical","Backward horizontal","Backward vertical","Duplicate top","Duplicate left","Duplicate bottom","Duplicate right","Duplicate horizontal","Duplicate vertical","Checkered","Checkered inverse")
+#@gui : sep = separator(), note = note("<small>Author: <i>PhotoComiX</i>.      Latest update : <i>2010/29/12</i>.</small>")
+fx_pdithered :
+  +apply_gamma. $1 - 128 * $2 + 128 + $3 b. $4 c. 0,255 ditheredbw.
+  quantize.. $5 to_rgb b.. xy,$6
+  if $7==0 fx_compose_colordoping $8,0
+  elif $7==1 fx_compose_darken $8,0
+  elif $7==2 fx_compose_softlight $8,0
+  elif $7==3 fx_compose_grainmerge $8,0
+  elif $7==4 fx_compose_multiply $8,1
+  elif $7==5 fx_compose_value $8,1
+  fi
+
+fx_pdithered_preview :
+  gui_split_preview "fx_pdithered ${1--2}",$-1
+
+##########################################################################
+####################    SYMMETRY MASTER    ###############################
+##########################################################################
+
+#@gui  Symmetry Master : fx_viral,fx_viral(1)
+#@gui : Scale = float(8,0,15)
+#@gui : Mixer = choice ("Average","Grain Extract","Vivid","Difference","Exclusion","Negation")
+#@gui : Remix = choice ("Vivid","Average","Difference","Negation","Darken")
+#@gui : PhotoComix Preset = choice("Neat Merge","Lighty Smooth","Dream","Moody","Soft","Naif","Dark Boost","Whitening","None- Skip")
+#@gui : Activate Mirror = choice ("No-Skip", XY Mirror","2XY Mirror")
+#@gui : sep = separator()
+#@gui : note = note("WARNING,'Expanding Mirrors' multiply image size of x4 or if '2XY Mirrors' x9")
+#@gui : sep = separator()
+#@gui : Expanding Mirrors = bool(0)
+#@gui : sep = separator(), note = note("<small>Author: <i>PhotoComix</i>.      Latest update : <i>2011/13/11</i>.</small>")
+fx_viral :
+fx_rorschach $1,1,1
++mirror y
+if $2==0 blend average
+elif $2==1 blend grainextract
+elif $2==2 blend vividlight,0.5
+elif $2==3 blend difference
+elif $2==4 blend exclusion
+elif $2==5 blend negation fi
+
++fx_array_mirror 1,0,0,2,0,0,0
+if $3==0 blend vividlight,0.5
+elif $3==1 fx_compose_average 1,0
+elif $3==2 fx_compose_difference 1,0
+elif $3==3 fx_compose_negation 1,0
+elif $3==4 blend darken,0.8 fi
+
+if $4==0 fx_graphic_novelfxl 0,2,6,5,20,0,0.62,14,0,1,0.5,0.78,1.92,0,0,12,1,1,1,0.5,0.8,1.28,1.25,2,0,0.15,14,0,1,0.5,0.45,2,0,1,0,1,1,1,0.5,0.45,1
+elif $4==1 fx_graphic_novelfxl 0,7.2,14.65,5,20,0,1.06,36.14,0,1,0.5,0.85,1.93,0,0,8,1,1,1,0.5,0.95,2.89,1.25,2,0,0.15,14,0,1,0.5,0.45,2,0,1,0,1,1,1,0.5,0.45,1
+elif $4==2 fx_graphic_novelfxl 0,7.22892,14.6506,5,20,0,1.6,36.1,0,1,0.5,0.6,3.6,0,0,11,1,1,1,0.5,0.8,2.16,1.25,2,0,0.15,14,0,1,0.5,0.45,2,0,1,7,1,1,1,0.5,0.45,1
+# elif $4==3 fx_graphic_novelfxl 0,7.22892,14.6506,5,20,0,1.59036,36.1446,0,1,0.5,0.590361,3.61446,0,1,17,1,1,1,0.5,0.795181,2.16867,1.25,2,0,0.15,14,0,1,0.5,0.45,2,0,1,7,1,1,1,0.5,0.45,1
+elif $4==3 fx_graphic_novelfxl 0,7.22892,14.6506,5,20,0,1.59036,36.1446,0,1,0.5,0.590361,3.61446,0,0,8,1,1,1,0.5,0.373494,2.89157,1.25,2,0,0.15,14,0,1,0.5,0.45,2,0,1,0,1,1,1,0.5,0.45,1
+elif $4==4 fx_graphic_novelfxl 0,7.22892,14.6506,5,20,0,1.59036,36.1446,0,1,0.5,0.855422,1.92771,0,0,8,1,1,1,0.5,0.373494,2.89157,1.25,2,0,0.15,14,0,1,0.5,0.45,2,0,1,0,1,1,1,0.5,0.45,1
+elif $4==5 fx_graphic_novelfxl 1,7.22892,14.6506,5,20,0,1.06024,14,0,1,0.5,0.855422,1.3253,0,0,12,1,1,1,0.5,0.8,1.28,1.25,2,0,0.15,14,0,1,0.5,0.45,2,0,1,0,1,1,1,0.5,0.45,1
+elif $4==6 fx_graphic_novelfxl 1,7.22892,14.6506,5,20,0,1.06024,36.1446,0,1,0.5,0.855422,1.92771,0,0,7,1,1,1,0.5,0.951807,1.92771,1.25,2,0,0.15,14,0,1,0.5,0.45,2,0,1,0,1,1,1,0.5,0.45,1
+elif $4==7 fx_graphic_novelfxl 1,7.22892,14.6506,5,20,0,1.59036,36.1446,0,1,0.5,0.590361,3.61446,0,1,18,1,1,1,0.5,0.795181,2.16867,1.25,2,0,0.15,14,0,1,0.5,0.45,2,0,1,0,1,1,1,0.5,0.45,1 fi
+
+if $5==1 fx_array_mirror 1,0,0,2,0,$6,0
+elif $5==2 fx_array_mirror 1,0,0,3,0,$6,0 fi
+
+
+##############################################################################
+##                          BW STEAMPUNK PEN                                ##
+##############################################################################
+
+#@gui B&W Steampunk Pencil : fx_steampen, fx_steampen_preview(0)
+#@gui : sep = separator()
+#@gui : Radius = float(0.95,0,4)
+#@gui : Amplitude = float(14,0,200)
+#@gui : Iterations = int(2,1,20)
+#@gui : Steam Pressure = int(2,1,30)
+#@gui : Lubrication = float(0.9,0,1.9)
+
+#@gui : sep = separator()
+#@gui : Contrast FX = choice("None-Skip","L Normalization","Mask","Boost","Fast Tone Map")
+#@gui : Equalize = bool(true)
+
+#@gui : sep = separator()
+#@gui : note = note("For a more 'painted' effect")
+#@gui : Add Painter's Touch = bool(false)
+#@gui : note = note("If unchecked the 3 sliders below are disabled")
+#@gui : sep = separator ()
+#@gui : Painter's Touch Sharpness = float(0.5,0,2)
+#@gui : Painter's Edge Protection Flow = float(0.75,0,1)
+#@gui : Painter's Smoothness = float(0.48,0,10)
+#@gui : sep = separator(), Preview type = choice("Full","Forward horizontal","Forward vertical","Backward horizontal","Backward vertical","Duplicate top","Duplicate left","Duplicate bottom","Duplicate right","Duplicate horizontal","Duplicate vertical","Checkered","Checkered inverse")
+#@gui : sep = separator(), note = note("<small>Author: <i>PhotoComiX</i>.      Last update : <i>2011/6/29 </i>.</small>")
+fx_steampen :
+repeat $! l[$>] split_opacity l[0]
+fx_pencilbw $1,$2,0,0,0
+fx_kuwahara $3,$4,0,0
+b xy,$5
+
+if $6==1 fx_normalize_local 4.8,22,6.89,20,1,3,0
+elif $6==2 fx_contrast_swm 2,0,1
+elif $6==3 fx_contrast_swm 2,1,1
+elif $6==4 fx_map_tones_fast 3,0.5,3, fi
+if $7==1 equalize 255 fi
+if $8==1 fx_smooth_anisotropic 60,$9,$10,$11,1.1,0.8,30,2,0,1,1,0 fi
+done a c done done
+fx_steampen_preview :
+  gui_split_preview "fx_steampen ${1--2}",$-1
+
+#########################################################################
+###############         *WILD CARTOONIZER*          ####################
+#########################################################################
+
+#@gui Wild Cartoonizer : fx_m_l_unsharp2 , fx_m_l_unsharp2_preview(0)
+#@gui : sep = separator ()
+#@gui : sep = separator ()
+#@gui : Radius 1 = float(12,0,100)
+#@gui : Amount 1 = float (2.18,0,10)
+#@gui : Radius 2 = float(0.3,0,100)
+#@gui : Amount 2 = float (1.5,0,10)
+#@gui : Darken Merge Opacity = float (1,0,1)
+#@gui : Lighten Merge Opacity = float (0.5,0,1)
+#@gui : sep = separator ()
+#@gui : note = note("Additional Painter Module")
+#@gui : sep = separator ()
+#@gui : Add Painter's Touch = bool(false)
+#@gui : Painter's Touch Sharpness = float(0.5,0,2)
+#@gui : Painter's Edge Protection Flow = float(0.8,0,1)
+#@gui : Painter's Smoothness =float(1.28,0,10)
+#@gui : sep = separator(), Preview type = choice("Full","Forward horizontal","Forward vertical","Backward horizontal","Backward vertical","Duplicate top","Duplicate left","Duplicate bottom","Duplicate right","Duplicate horizontal","Duplicate vertical","Checkered","Checkered inverse")
+#@gui : note = note("<small>Author: <i>PhotoComiX</i>. Latest update : <i>12/29/2010</i>.</small>")
+
+fx_m_l_unsharp2 :
+
++unsharp $1,$2,0
+ unsharp $3,$4,0 [1] reverse fx_compose_darken $5
++unsharp $3,$4,0 reverse fx_compose_lighten $6
+if $7==1 fx_smooth_anisotropic 60,$8,$9,$10,1.1,0.8,30,2,0,1,1,0 fi
+ blend overlay
+fx_m_l_unsharp2_preview :
+gui_split_preview "fx_m_l_unsharp2 ${1--2}",$-1
+#########################################################################
+###############         *PHOENIX STEAM-PEN*          ####################
+#########################################################################
+
+#@gui Phoenix Steam-Pencil : fx_phoenix, fx_phoenix_preview(0)
+#@gui : sep = separator()
+#@gui : note = note("Controls for 'Pencil' applied on a copy of original )
+#@gui : sep = separator()
+#@gui : Radius = float(0.95,0,4)
+#@gui : Amplitude = float(14,0,200)
+#@gui : sep = separator()
+#@gui : note = note("Controls for 'Steam' applied on the Pencil layer )
+#@gui : sep = separator()
+#@gui : Iterations = int(2,1,7)
+#@gui : Steam Pressure = int(2,1,7)
+#@gui : Lubrication = float(0.9,0,1.9)
+
+#@gui : sep = separator()
+#@gui : note = note("To exit here or merge with the original")
+#@gui : BW or Colours = choice ("Black and White","Colours")
+#@gui : note = note("to activate the Merging Options below chose 'Colours'")
+#@gui : sep = separator()
+#@gui : Swap Layers = bool(0)
+#@gui : Merging Options = choice("Value","Lightness","Luminance","*Colors Doping*","*Comix Colors*","Graphic Colors*",*Dark Edges*","*Vivid Edges*","Multiply","Color Burn","Darken","Lighten","Hard Light","Soft Light","Overlay","Grain Merge","Edges","Interpolation")
+#@gui : Opacity = float (1,0,1)
+#@gui : *Intensity*= float (1,0,1)
+#@gui : sep = separator(),
+#@gui : sep = separator(), Preview type = choice("Full","Forward horizontal","Forward vertical","Backward horizontal","Backward vertical","Duplicate top","Duplicate left","Duplicate bottom","Duplicate right","Duplicate horizontal","Duplicate vertical","Checkered","Checkered inverse")
+#@gui : sep = separator(), note = note("<small>Author: <i>PhotoComiX</i>.      Last update : <i>2011/11/14 </i>.</small>")
+#@gui : note = link("Filter how to and help","http://www.gimpchat.com/viewtopic.php?f=9&t=2983")
+fx_phoenix :
+
++fx_pencilbw $1,$2,0,0,0
+fx_kuwahara[1] $3,$4,0,0
+to_rgb. b[1] xy,$5
+if $6==0 remove[0] return fi
+
+if $8==0 reverse fx_compose_value $9,$7
+elif $8==1 reverse fx_compose_lightness $9,$7
+elif $8==2 reverse fx_compose_luminance $9,$7
+elif $8==3 fx_compose_colordoping $9,$7
+elif $8==4 fx_compose_comix_color $9,$7,$10
+elif $8==5 fx_compose_graphicolor $9,0,$7
+elif $8==6 fx_compose_graphixcolor $9,$7
+elif $8==7 fx_compose_vividedges $9,0.50,$7,$10
+elif $8==8 fx_compose_darkedges $9,0.50,$7,$10
+elif $8==6 fx_compose_multiply $9,$7
+elif $8==7 fx_compose_colorburn $9,$7
+elif $8==8 fx_compose_darken $9,$7
+elif $8==9 fx_compose_lighten $9,$7
+elif $8==10 fx_compose_screen $9,$7
+elif $8==11 fx_compose_hardlight $9,$7
+elif $8==12 fx_compose_softlight $9,$7
+elif $8==13 fx_compose_overlay $9,$7
+elif $8==14 fx_compose_grainmerge $9,$7
+elif $8==15 fx_compose_edges $9,0.80,$7
+elif $8==16 fx_compose_interpolation $9,$7  fi
+
+fx_phoenix_preview :
+  gui_split_preview "fx_phoenix ${1--2}",$-1
+
+###########################################################################################
+#@gui Color Stamp : fx_colorstamp, fx_colorstamp_preview(0)
+#@gui : note = note("BW module,analog to Stamp filter")
+#@gui : sep = separator()
+#@gui : Auto-Threshold = bool(1)
+#@gui : Threshold = int(50,0,100)
+#@gui : sep = separator()
+#@gui : note = note ("Color module")
+#@gui : Activate Color Module= bool(1)
+#@gui : Quantize Colors =int(20,2,255)
+#@gui : Color Smoothness = float(2,0,20)
+#@gui : sep = separator(), Preview type = choice("Full","Forward horizontal","Forward vertical","Backward horizontal","Backward vertical","Duplicate top","Duplicate left","Duplicate bottom","Duplicate right","Duplicate horizontal","Duplicate vertical","Checkered","Checkered inverse")
+#@gui : sep = separator(), note = note("<small>Authors: <i>PhotoComiX , Antaron, Mahvin, David Tschumperl&#233;</i>.             Latest update : 2011/17/05.</small>")
+
+fx_colorstamp :
+
+repeat $! l[$>] split_opacity l[0]
+
+  +norm
+  if $1 otsu. 256 else threshold. $2% fi
+   n. 0,255
+  apply_curve. 1,0,0,101,33,170,229,255,255
+  if $3==1 quantize.. $4 to_rgb b.. xy,$5
+   fx_compose_darken 1,0 fi
+   done a c done done
+
+fx_colorstamp_preview :
+  gui_split_preview "fx_colorstamp ${1--2}",$-1
+
+##############################################################################
+##               PSYCHEDELIC GLASSWORK TILER                                ##
+##############################################################################
+#@gui Psychedelic Glasswork Tiler : fx_psyglass, fx_psyglass_preview(1)
+#@gui : sep = separator()
+#@gui : note = note("Stained Glass controls")
+#@gui : White Separators = bool(false)
+#@gui : Edges = float(20,0,100)
+#@gui : Shading = float(0.1,0,0.5)
+#@gui : Thin Separators = bool(1)
+#@gui : Equalize = bool(1)
+#@gui : sep = separator()
+#@gui : sep = separator()
+#@gui : note = note("To skip Layer Fx set Opacity to 0")
+#@gui : sep = separator()
+#@gui : Layer Fx = choice("Grain Merge","Hard Light","Soft Light","Overlay","Color Burn","Multiply")
+#@gui : Opacity = float(1,0,1)
+#@gui : sep = separator()
+#@gui : sep = separator()
+#@gui : note = note("Quick Corrections and Special Fx")
+
+#@gui : Apply Mask = bool(true)
+#@gui : note = note("Contrast Mask preset")
+#@gui : sep = separator()
+#@gui : Raise Local Contrast = bool(false)
+#@gui : note = note("Local Normalization preset")
+#@gui : sep = separator()
+#@gui : sep = separator()
+
+#@gui : note = note("Mirrors Controls")
+#@gui : Activate Mirrors = bool(true)
+#@gui : sep = separator()
+#@gui : Iterations = int(1,1,10)
+#@gui : X-Offset = float(0,0,100)
+#@gui : Y-Offset = float(0,0,100)
+#@gui : Array Mode = choice(2,"X-axis","Y-axis","XY-axes","2XY-axes")
+#@gui : Initialization = choice("Original","Mirror X","Mirror Y","Rotate 90 deg.","Rotate 180 deg.","Rotate 270 deg.")
+#@gui : Expand Size = _bool(false)
+#@gui : sep = separator(), Preview type = choice("Full","Forward horizontal","Forward vertical","Backward horizontal","Backward vertical","Duplicate top","Duplicate left","Duplicate bottom","Duplicate right","Duplicate horizontal","Duplicate vertical","Checkered","Checkered inverse")
+#@gui : sep = separator()
+
+#@gui : sep = separator(), note = note("<small>Author: <i>PhotoComiX</i>. Latest update : <i>2011/30/03</i>.</small>")
+
+fx_psyglass :
+
+  repeat $! l[$>] split_opacity l[0]
+    if $1==0
+      b 0.1 stained_glass $2,$3,$4 n 0,255
+    elif $1==1
+      negate b 0.1 stained_glass $2,$3,$4 n 0,255 negate
+    fi
+    if $5 equalize 256 fi
+    +b 0.9
+    if $6==0 fx_compose_grainmerge $7
+    elif $6==1 fx_compose_hardlight $7
+    elif $6==2 fx_compose_softlight $7
+    elif $6==3 fx_compose_overlay $7
+    elif $6==4 fx_compose_colorburn $7
+    elif $6==5 fx_compose_multiply $7
+    fi
+    if $8==1 fx_contrast_swm 2,0,1,0 fi
+    if $9==1 fx_normalize_local 2,6,5,20,1,3,0 fi
+
+    if $10 # Apply mirror effect
+      if $15==1 mirror x
+      elif $15==2 mirror y
+      elif $15==3 rotate 90
+      elif $15==4 rotate 180
+      elif $15==5 rotate 270
+      fi
+      array_mirror $11,$14,$16
+      shift -$12%,-$13%,0,0,2
+    fi
+
+  done a c done done
+
+fx_psyglass_preview :
+  gui_split_preview "fx_psyglass ${1--2}",$-1
+
+#####################################################################################################
+####################################    COLOR SKETCH            #####################################
+#####################################################################################################
+#@gui Color Sketch : fx_colorsketchbw, fx_colorsketchbw_preview(0)
+#@gui : Amplitude = float(300,0,4000)
+#@gui : Density = float(50,0,100)
+#@gui : Smoothness = float(1,0,10)
+#@gui : Opacity = float(0.1,0,1)
+#@gui : Edge = float(20,0,100)
+#@gui : Fast Approximation = bool(1)
+#@gui : Negative = bool(0)
+#@gui : Quantize Colors = int (20,2,255)
+#@gui : Color Smoothness = float(2,0.50,30)
+#@gui : Mixer Mode = choice("Color Doping","Darken","Hard Light","Grain Merge","Lightness","Multiply","Value")
+#@gui : Color Intensity =float (1,0,1)
+#@gui : sep = separator(), Preview type = choice("Full","Forward horizontal","Forward vertical","Backward horizontal","Backward vertical","Duplicate top","Duplicate left","Duplicate bottom","Duplicate right","Duplicate horizontal","Duplicate vertical","Checkered","Checkered inverse")
+#@gui : sep = separator(), note = note("<small>Author: <i>PhotoComiX</i>.      Latest update : <i>2010/29/12</i>.</small>")
+fx_colorsketchbw :
+  +b $3 hardsketchbw. $1,$2,$4,$5,$6
+  if $7 negate. fi
+   quantize.. $8  to_rgb  b.. xy,$9
+  if $10==0 fx_compose_colordoping $11,0
+elif $10==1 fx_compose_darken $11,0
+elif $10==2 fx_compose_hardlight $11,1
+elif $10==3 fx_compose_grainmerge $11,1
+elif $10==4 fx_compose_lightness $11,1
+elif $10==5 fx_compose_multiply $11,0
+elif $10==6 fx_compose_value $11,1 fi
+
+ fx_colorsketchbw_preview :
+  gui_split_preview "fx_colorsketchbw ${1--2}",$-1
+###################################################################################################################
+###                                       SCALE DOWN NEAT                                                      ####
+###################################################################################################################
+
+#@gui Scale Down Neat  : fx_scaledown3, fx_scaledown3_preview(0)
+#@gui : sep = separator()
+#@gui : note = note("To scale down preserving clean edges and smoothly sharpen")
+#@gui : sep = separator()
+#@gui : Automatic Pre-Blur = bool(false)
+
+#@gui : sep = separator()
+#@gui : note = note("Automatic pre-blur disable the 2 sliders below")
+#@gui : sep = separator()
+#@gui : Blur X = float (1,0.2,4)
+#@gui : Blur Y = float (1,0.2,4)
+
+#@gui : sep = separator()
+#@gui : Scale Down To = choice(1,"New Width and Height","preserve_image_ratio Set new Width","preserve_image_ratio Set new Height")
+#@gui : New Width = int(1600,16,3200)
+#@gui : New Height = int(1600,16,3200)
+
+#@gui : sep = separator()
+#@gui : Skip Post Sharpening = bool(false)
+#@gui : sep = separator()
+#@gui : note = note(""Skip Post Sharpening": if chosen will deactivate all controls below")
+#@gui : sep = separator()
+#@gui : Amount = float(2.3,0,10)
+#@gui : Darkness/Lightness Level = float(1,0,4)
+#@gui : Channel(s) = ~choice(12,"All","RGBA [All]","RGBA [Red-Green-Blue]","RGBA [Red]","RGBA [Green]","RGBA [Blue]",\
+# "RGBA [Alpha]","Linear RGB [All]","Linear RGB [Red]","Linear RGB [Green]","Linear RGB [Blue]","YCbCr [All]",\
+# "YCbCr [Luminance]","YCbCr [Blue-Red Chrominances]","YCbCr [Blue Chrominance]","YCbCr [Red Chrominance]",\
+# "YCbCr [Green Chrominance]","Lab [All]","Lab [Lightness]","Lab [ab-Chrominances]","Lab [a-Chrominance]",\
+# "Lab [b-Chrominance]","Lch [All]","Lch [ch-Chrominances]","Lch [c-Chrominance]","Lch [h-Chrominance]","HSV [All]",\
+# "HSV [Hue]","HSV [Saturation]","HSV [Value]","HSI [All]","HSI [Intensity]","HSL [All]","HSL [Lightness]",\
+# "CMYK [All]","CYMK [Cyan-Magenta-Yellow]","CMYK [Cyan]","CMYK [Magenta]","CMYK [Yellow]","CMYK [Key]","YIQ [All]",\
+# "YIQ [Luma]","YIQ [Chromas]","RYB [All]","RYB [Red]","RYB [Yellow]","RYB [Blue]")
+#@gui : sep = separator(), Preview type = choice("Full","Forward horizontal","Forward vertical","Backward horizontal","Backward vertical","Duplicate top","Duplicate left","Duplicate bottom","Duplicate right","Duplicate horizontal","Duplicate vertical","Checkered","Checkered inverse")
+#@gui : sep = separator()
+#@gui : sep = separator(), note = note("<small>Author: <i>PhotoComix</i>.      Latest update : <i>2012/25/09</i>.</small>")
+
+fx_scaledown3 :
+if $1==0" && "$4==0 b x,{w/$5} b y,{h/$6}
+elif $1==0" && "$4==1 b x,{w/$5} b y,{w/$6}
+elif $1==0" && "$4==2 b x,{h/$5},b y,{w/$6}
+elif $1==1" && "$4==0 b x,$2 b y,$3
+elif $1==1" && "$4==1 b x,$2 b y,$3
+elif $1==1" && "$4==2 b x,$2 b y,$3
+fi
+
+if $4==0
+r $5,$6,2
+elif $4==1
+rs $5
+elif $4==2
+rs ,$6,2
+fi
+
+if $7==0
+fx_unsharp 0,1.25,30,$8,0,$9,{$9/3},1,0,$10
+fi
+
+fx_scaledown3_preview :
+ gui_split_preview "fx_scaledown3 ${1--2}",$-1
+#############################################################################
+#####                        BOOST SCREEN                               #####
+#############################################################################
+
+#@gui Boost Screen: fx_compose_boostscreen,fx_compose_boostscreen
+#@gui : Opacity = float(0.7,0,1)
+#@gui : Revert Layers = bool(0)
+#@gui : Opacity 2 = float(0.7,0,1)
+#@gui : note = note ("This filter needs two layers to work properly. Set the <i>Input layers</i> option to handle multiple input layers.")
+#@gui : sep = separator(), note = note("<small>Author: <i>PhotoComiX</i>.      Latest update : <i>2011/13/11</i>.</small>")
+
+fx_compose_boostscreen :
+  repeat $! l[$>]
+    fx_compose_screen $1,$2 . fx_compose_grainmerge $3,0
+  done done
+
+#############################################################################
+#####                         DARK SCREEN                               #####
+#############################################################################
+
+#@gui Dark Screen: fx_compose_darkscreen,fx_compose_darkscreen
+#@gui : Opacity = float(0.7,0,1)
+#@gui : Revert Layers = bool(0)
+#@gui : Opacity 2 = float(0.7,0,1)
+#@gui : note = note ("This filter needs two layers to work properly. Set the <i>Input layers</i> option to handle multiple input layers.")
+#@gui : sep = separator(), note = note("<small>Author: <i>PhotoComiX</i>.      Latest update : <i>2011/13/11</i>.</small>")
+fx_compose_darkscreen :
+  repeat $! l[$>]
+    fx_compose_screen $1,$2 . fx_compose_multiply $3,0
+  done done
+
+#############################################################################
+#####                        VIVID SCREEN                               #####
+#############################################################################
+
+#@gui Vivid Screen: fx_compose_vividscreen , fx_compose_vividscreen
+#@gui : Opacity = float(0.6,0,1)
+#@gui : Revert Layers = bool(0)
+#@gui : Opacity 2 = float(0.7,0,1)
+#@gui : note = note ("This filter needs two layers to work properly. Set the <i>Input layers</i> option to handle multiple input layers.")
+#@gui : sep = separator(), note = note("<small>Author: <i>PhotoComiX</i>.      Latest update : <i>2011/13/11</i>.</small>")
+fx_compose_vividscreen :
+  repeat $! l[$>]
+    fx_compose_screen $1,$2 . fx_compose_overlay $3,0
+  done done
+
+#############################################################################
+#####                        HEAVY SCREEN                               #####
+#############################################################################
+
+#@gui Heavy Screen: fx_compose_heavyscreen, fx_compose_heavyscreen
+#@gui : Opacity = float(0.6,0,1)
+#@gui : Revert Layers = bool(0)
+#@gui : Opacity 2 = float(0.7,0,1)
+#@gui : note = note ("This filter needs two layers to work properly. Set the <i>Input layers</i> option to handle multiple input layers")
+#@gui : sep = separator(), note = note("<small>Author: <i>PhotoComiX</i>.      Latest update : <i>2011/13/11</i>.</small>")
+
+fx_compose_heavyscreen :
+  repeat $! l[$>]
+    fx_compose_screen $1,$2 . fx_compose_colorburn $3,0
+  done done
+
+#############################################################################
+#####                        COMIX COLORS                               #####
+#############################################################################
+
+#@gui Comix Colors: fx_compose_comix_color,fx_compose_comix_color
+#@gui : Opacity  = float(1,0,1)
+#@gui : Revert Layers = bool(0)
+#@gui : Opacity 2 = float(1,0,1)
+#@gui : note = note ("This filter needs two layers to work properly. Set the <i>Input layers</i> option to handle multiple input layers.")
+#@gui : sep = separator(), note = note("<small>Author: <i>PhotoComiX</i>.      Latest update : <i>2011/13/11</i>.</small>")
+fx_compose_comix_color :
+   rv fx_compose_lightness $1,$2 [^] fx_compose_grainmerge $3,0
+
+#############################################################################
+#####                        VIVID COLORS                               #####
+#############################################################################
+
+#@gui Vivid Colors: fx_compose_vivid_color,fx_compose_vivid_color
+#@gui : Opacity  = float(1,0,1)
+#@gui : Revert Layers = bool(0)
+#@gui : Opacity 2 = float(1,0,1)
+#@gui : note = note ("This filter needs two layers to work properly. Set the <i>Input layers</i> option to handle multiple input layers.")
+#@gui : sep = separator(), note = note("<small>Author: <i>PhotoComiX</i>.      Latest update : <i>2011/13/11</i>.</small>")
+fx_compose_vivid_color :
+  reverse fx_compose_lightness $1,$2 [^] fx_compose_softlight $3,0
+
+#############################################################################
+#####                        COLORS  DOPING                             #####
+#############################################################################
+
+#@gui  Color Doping: fx_compose_colordoping , fx_compose_colordoping
+#@gui : Opacity  = float(1,0,1)
+#@gui : Revert Layers = bool(0)
+#@gui : note = note ("This filter needs two layers to work properly. Set the <i>Input layers</i> option to handle multiple input layers.")
+#@gui : sep = separator(), note = note("<small>Author: <i>PhotoComiX</i>.      Latest update : <i>2011/13/11</i>.</small>")
+fx_compose_colordoping :
+reverse fx_compose_lightness 1,$2 [^] fx_compose_multiply $1,0
+
+#############################################################################
+#####                          DARK EDGES                               #####
+#############################################################################
+#@gui Dark Edges : fx_compose_darkedges, fx_compose_darkedges(0)
+#@gui : Opacity = float(1,0,1)
+#@gui : Edges Smoothness = float(0.5,0,5)
+#@gui : Revert Layers = bool(0)
+#@gui : Opacity 2 = float(0.7,0,1)
+#@gui : sep = separator(), note = note("<small>Author: <i>PhotoComiX</i>.      Latest update : <i>2011/13/11</i>.</small>")
+ fx_compose_darkedges :
+ fx_compose_edges $1,$2,$3 [^] fx_compose_multiply $4,0
+
+#############################################################################
+#####                         VIVID EDGES                               #####
+#############################################################################
+
+#@gui Vivid Edges : fx_compose_vividedges, fx_compose_vividedges
+#@gui : Opacity = float(1,0,1)
+#@gui : Edges Smoothness = float(0.5,0,5)
+#@gui : Revert Layers = bool(0)
+#@gui : Opacity 2 = float(0.7,0,1)
+#@gui : note = note ("This filter needs two layers to work properly. Set the <i>Input layers</i> option to handle multiple input layers.")
+#@gui : sep = separator(), note = note("<small>Author: <i>PhotoComiX</i>.      Latest update : <i>2011/13/11</i>.</small>")
+
+ fx_compose_vividedges :
+ fx_compose_edges $1,$2,$3 [^] fx_compose_overlay $4,0
+
+#############################################################################
+#####                      GRAPHIC COLORS                               #####
+#############################################################################
+#@gui Graphic Colors : fx_compose_graphicolor,fx_compose_graphicolor
+#@gui : Opacity  = float(0.6,0,1)
+#@gui : Revert Layers = bool(0)
+#@gui : Opacity 2 = float(0.8,0,1)
+
+#@gui : note = note ("This filter needs two layers to work properly. Set the <i>Input layers</i> option to handle multiple input layers.")
+#@gui : sep = separator(), note = note("<small>Author: <i>PhotoComiX</i>.      Latest update : <i>2011/13/11</i>.</small>")
+fx_compose_graphicolor :
+reverse +fx_compose_luminance $1,$2, rm.. fx_compose_softlight $3,0
+
+#############################################################################
+#####                      GRAPHIX COLORS                               #####
+#############################################################################
+#@gui GraphiX Colors : fx_compose_graphixcolor,fx_compose_graphixcolor
+#@gui : Opacity  = float(1,0,1)
+#@gui : Revert Layers = bool(0)
+#@gui : note = note ("This filter needs two layers to work properly. Set the <i>Input layers</i> option to handle multiple input layers.")
+#@gui : sep = separator(), note = note("<small>Author: <i>PhotoComiX</i>.      Latest update : <i>2011/13/11</i>.</small>")
+fx_compose_graphixcolor :
+  if $!<2 return fi
+  reverse +fx_compose_value 1,$2 k[-1,-3] fx_compose_grainmerge $1,0
+
+#####################################################################################
+#@gui Graphic Boost-Old : fx_graphic_boost, fx_graphic_boost_preview(0)
+#@gui : sep = separator ()
+#@gui : note = note("Unsharp Mask controls")
+#@gui : Radius = float(1.25,0,20)
+#@gui : Darken = float(2,0,10)
+#@gui : sep = separator()
+#@gui : Skip Others Steps = bool(false)
+#@gui : note = note("Check for visual control, UNcheck to reactivate the other controls")
+#@gui : sep = separator()
+#@gui : sep = separator()
+#@gui : note = note("BW_Pencil Controls")
+#@gui : Pencil Size = float(0.15,0,4)
+#@gui : Pencil Amplitude = float(14,0,200)
+#@gui : sep = separator()
+#@gui : Skip Others Steps = bool(false)
+#@gui : sep = separator ()
+#@gui : sep = separator ()
+#@gui : Activate 'Pencil Smoother' = bool(true)
+#@gui : note = note("If unchecked the 3 sliders below are disabled")
+#@gui : Pencil Smoother Sharpness = float(0.5,0,2)
+#@gui : Pencil Smoother Edge Protection = float(0.45,0,1)
+#@gui : Pencil Smoother Smoothness = float (2,0,10)
+#@gui : sep = separator()
+#@gui : Skip Others Steps = bool(false)
+#@gui : sep = separator ()
+#@gui : sep = separator ()
+#@gui : note = note("Merging Options")
+#@gui : Swap Layers = bool (True)
+#@gui : note = note ("'Swap' change the effect of Merging and Intensity")
+#@gui : Merging Option = choice("Hard Light","Grain Merge","Multiply","Color Burn","Overlay","Value","Darken","Stamp")
+#@gui : Intensity = float(1,0,1)
+#@gui : sep = separator ()
+#@gui : Add Painter's Touch = bool(true)
+#@gui : note = note("If unchecked the 3 sliders below are disabled")
+#@gui : sep = separator ()
+#@gui : Painter's Touch Sharpness = float(0.5,0,2)
+#@gui : Painter's Edge Protection Flow = float(0.45,0,1)
+#@gui : Painter's Smoothness =float(1,0,10)
+#@gui : sep = separator(), Preview type = choice("Full","Forward horizontal","Forward vertical","Backward horizontal","Backward vertical","Duplicate top","Duplicate left","Duplicate bottom","Duplicate right","Duplicate horizontal","Duplicate vertical","Checkered","Checkered inverse")
+#@gui : sep = separator(), note = note("<small>Author: <i>PhotoComiX</i>.      Latest update : <i>2011/10/01</i>.</small>")
+#@gui : note = link("Filter explained here","http://www.gimpchat.com/viewtopic.php?f=9&t=775")
+fx_graphic_boost :
+  repeat $! l[$>] split_opacity l[0]
+    fx_unsharp 1,$1,30,3,0,$2,0.40,1,0,0,0
+    if $3==1 break fi
+    +fx_pencilbw $4,$5,0,0,0
+    if $6==1 k. break fi
+    if $7==1 fx_smooth_anisotropic[1] 60,$8,$9,$10,1.1,0.8,30,2,0,1,1,0 fi
+    if $11==1 k. break fi
+    if $12==1  reverse fi
+  #( Hard Light,Grain Merge, Multiply,Color Burn ,Overlay ,Value, Darken ,Stamp )
+    if $13==0 fx_compose_hardlight $14
+    elif $13==1 fx_compose_grainmerge $14
+    elif $13==2 fx_compose_multiply $14
+    elif $13==3 fx_compose_colorburn $14
+    elif $13==4 fx_compose_overlay $14
+    elif $13==5 fx_compose_value $14,0
+    elif $13==6 fx_compose_darken $14
+    elif $13==7 fx_compose_stamp $14 fi
+    if $15==1 fx_smooth_anisotropic 60,$16,$17,$18,1.1,0.8,30,2,0,1,1,0 fi
+  done a c done done
+
+fx_graphic_boost_preview :
+  gui_split_preview "fx_graphic_boost ${1--2}",$-1
+
+############################################################################
+
+#@gui Graphic Novel-Old : fx_novelfx, fx_novelfx_preview(0)
+#@gui : sep = separator ()
+#@gui : note = note("Apply Local Normalization")
+#@gui : Skip This Step = bool(false)
+#@gui : sep = separator ()
+#@gui : note = note("Local Normalization Controls")
+#@gui : LN Amplititude = float(2,0,60)
+#@gui : LN Size = float(6,0,64)
+#@gui : LN Neightborhood-Smoothness = float(5,0,40)
+#@gui : LN Average-Smoothness = float(20,0,40)
+#@gui : sep = separator()
+#@gui : Skip All Other Steps = bool(false)
+#@gui : sep = separator()
+#@gui : sep = separator()
+#@gui : note = note("Pencil Options")
+#@gui : Pencil Size = float(0.62,0,4)
+#@gui : Pencil Amplitude = float(14,0,200)
+#@gui : sep = separator()
+#@gui : Skip All Other Steps = bool(false)
+#@gui : sep = separator()
+#@gui : sep = separator()
+#@gui : Activate 'Pencil Smoother' = bool(true)
+#@gui : note = note("If unchecked the 3 sliders below are disabled")
+#@gui : sep = separator()
+#@gui : Pencil Smoother Sharpness = float(0.5,0,2)
+#@gui : Pencil Smoother Edge Protection = float(0.78,0,1)
+#@gui : Pencil Smoother Smoothness = float(1.92,0,10)
+#@gui : sep = separator()
+#@gui : Skip All Other Steps = bool(false)
+#@gui : sep = separator ()
+#@gui : sep = separator()
+#@gui : note = note ("Boost Merging Options")
+#@gui : Swap Layers = bool (false)
+#@gui : Boost Merging Option = choice("Overlay","Multiply","Soft light","Color Burn","Darken","Stamp","Hard Light","Value","Grain Merge","Freeze")
+#@gui : Opacity = float(1,0,1)
+#@gui : sep = separator ()
+#@gui : Add Painter's Touch = bool(true)
+#@gui : sep = separator ()
+#@gui : Painter's Touch Sharpness = float(0.5,0,2)
+#@gui : Painter's Edge Protection Flow = float(0.8,0,1)
+#@gui : Painter's Smoothness =float(1.28,0,10)
+#@gui : sep = separator(), Preview type = choice("Full","Forward horizontal","Forward vertical","Backward horizontal","Backward vertical","Duplicate top","Duplicate left","Duplicate bottom","Duplicate right","Duplicate horizontal","Duplicate vertical","Checkered","Checkered inverse")
+#@gui : sep = separator(), note = note("<small>Author: <i>PhotoComiX</i>.      Latest update : <i>2011/24/04</i>.</small>")
+#@gui : note = link("Filter explained here","http://www.gimpchat.com/viewtopic.php?f=9&t=1582")
+fx_novelfx :
+  repeat $! l[$>] split_opacity l[0]
+    if $1==0 fx_normalize_local $2,$3,$4,$5,1,3,0 fi
+    if $6==0 +fx_pencilbw $7,$8,0,0,0 fi
+ if $9==1 k. break fi
+      if $10==1 fx_smooth_anisotropic. 60,$11,$12,$13,1.1,0.8,30,2,0,1,1,0 fi
+   if $14==1 k. break fi
+   if $15==1 reverse fi
+   #choice ("Overlay","Multiply","Soft light","Color Burn,Darken,Stamp,Hard #Light,Value,Grain Merge,Freeze )
+      if $16==0 fx_compose_overlay[-1,0] $17
+      elif $16==1 fx_compose_multiply[-1,0] $17
+      elif $16==2 fx_compose_softlight[-1,0] $17
+      elif $16==3 fx_compose_colorburn[-1,0] $17
+      elif $16==4 fx_compose_darken[-1,0] $17
+      elif $16==5 fx_compose_stamp[-1,0] $17
+      elif $16==6 fx_compose_hardlight[-1,0] $17
+      elif $16==7 reverse[1,0] fx_compose_value[-1,0] $17,0
+      elif $16==8 fx_compose_grainmerge[-1,0] $17
+   elif $16==8 fx_compose_freeze[-1,0] $17 fi
+      if $18==1 fx_smooth_anisotropic 60,$19,$20,$21,1.1,0.8,30,2,0,1,1,0 fi
+  done a c done done
+
+fx_novelfx_preview :
+  gui_split_preview "fx_novelfx ${1--2}",$-1
+
+#############################################################################
+#####              PHOTOCOMIX SMOOTHING PRESET                          #####
+#############################################################################
+
+#@gui PhotoComiX Smoothing : fx_smooth_anisotropic, fx_smooth_anisotropic(0)
+#@gui : Amplitude = float(60,0,1000)
+#@gui : Sharpness = float(0.16,0,2)
+#@gui : Anisotropy = float(0.63,0,1)
+#@gui : Gradient Smoothness = float(0.6,0,10)
+#@gui : Tensor Smoothness = float(2.35,0,10)
+#@gui : Spatial Precision = float(0.8,0.1,2)
+#@gui : Angular Precision = float(30,1,180)
+#@gui : Value Precision = float(2,0.1,5)
+#@gui : Interpolation = choice(0,"Nearest neighbor","Linear","Runge-Kutta")
+#@gui : Fast Approximation = bool(1)
+#@gui : Iterations = int(1,1,10)
+#@gui : Channel(s) = choice("RGB","Luminance","Blue & Red chrominances","Blue chrominance","Red chrominance")
+#@gui : Tiles = int(1,1,10)
+#@gui : note = note{"\n<small><b>Note : </b>This set of anisotropic smoothing parameters has been suggested by PhotoComiX.</small>"}
+#@gui : sep = separator(), note = note("<small>Author: <i>PhotoComiX</i>.      Latest update : <i>2010/29/12</i>.</small>")
+
+###########################################################################################################################
+#@gui Metallic Grain : fx_metalgrain, fx_metalgrain_preview
+#@gui : note = note("add a metallic grain adapt to pictorial and special effects")
+#@gui : sep = separator()
+#@gui : note = note("dependent from 'Couleurs Metalliques' by Samj")
+#@gui : sep = separator()
+#@gui : Intensity = float(0.5,0.1,1)
+#@gui : Swap Layers= bool(false)
+#@gui : sep = separator(), Preview type = choice("Full","Forward horizontal","Forward vertical","Backward horizontal","Backward vertical","Duplicate top","Duplicate left","Duplicate bottom","Duplicate right","Duplicate horizontal","Duplicate vertical","Checkered","Checkered inverse")
+#@gui : sep = separator(), note = note("<small>Author: <i>PhotoComix,a hack of a Samj filter</i>.      Latest update : <i>2012/29/02</i>.</small>")
+
+fx_metalgrain :
+
++Couleurs_Metalliques 1,1,19.86,0,0,0,7.4,11,3.96,20,1,0,0,1,1.9,10.2,1,0,0
+fx_compose_overlay  $1,$2
+
+ fx_metalgrain_preview :
+gui_split_preview "fx_metalgrain ${1--2}",$-1
+
+#################################################################################################################
+
+#@gui  Metallic Stencils : fx_metallicstencils , fx_metallicstencils_preview
+#@gui : Set Mode = choice("Darken","Lighten","Overlay")
+#@gui : sep = separator(), Preview type = choice("Full","Forward horizontal","Forward vertical","Backward horizontal","Backward vertical","Duplicate top","Duplicate left","Duplicate bottom","Duplicate right","Duplicate horizontal","Duplicate vertical","Checkered","Checkered inverse")
+#@gui : sep = separator(), note = note("<small>Author: <i>PhotoComix,a hack of a Samj filter</i>.      Latest update : <i>2012/03/10</i>.</small>")
+
+fx_metallicstencils :
++Couleurs_Metalliques 0,1,22,0,0,1,7.8,9,7.6,16.6,1,0,0,1,2.4,8.2,1,0
++fx_lylejk_stencil[0] 4,26.7045,2.41477,0
+rm[0]
+if $1==0 fx_compose_darken 1,0
+elif $1==1 fx_compose_lighten 1,0
+elif $1==2 fx_compose_overlay 1,0 fi
+
+fx_metallicstencils_preview :
+  gui_split_preview "fx_metallicstencils ${1--2}",$-1
+
+########################################################################################################
+#@gui Black Crayon Graffiti : fx_crayongraffiti2, fx_crayongraffiti2_preview(0)
+#@gui : Amplitude = float(300,0,4000)
+#@gui : Density = float(50,0,100)
+#@gui : Smoothness = float(1,0,10)
+#@gui : Opacity = float(0.4,0,1)
+#@gui : Edge = float(12,0,50)
+#@gui : Fast Approximation = bool(1)
+#@gui : Color Smoothness =float(2,1,30)
+#@gui : Mixer Style = choice(2,"Lightness","Value","Color Doping")
+#@gui : sep = separator(), Preview type = choice("Full","Forward horizontal","Forward vertical","Backward horizontal","Backward vertical","Duplicate top","Duplicate left","Duplicate bottom","Duplicate right","Duplicate horizontal","Duplicate vertical","Checkered","Checkered inverse")
+#@gui : sep = separator(), note = note("<small>Author: <i>PhotoComiX</i>.      Latest update : <i>2011/07/12</i>.</small>")
+fx_crayongraffiti2 :
+  repeat $! l[$>] split_opacity l[0]
+    +b $3 hardsketchbw. $1,$2,$4,$5,$6 to_rgb
+    negate. b.. xy,$7 reverse
+    if $8==0 compose_lightness
+    elif $8==1 compose_value
+    elif $8==2 fx_compose_colordoping 1,1 fi
+  done a c done done
+
+fx_crayongraffiti2_preview :
+  gui_split_preview "fx_crayongraffiti2 ${1--2}",$-1
+
+#--------------------------
+# Compatibility functions.
+#--------------------------
+compose_average :
+  e[^-1] "Compose image$? two-by-two, using average mode."
+  repeat int($!/2) l[$>,{$>+1}]
+    to_colormode 0 ri. ..,0,0,0.5,0.5 +
+  done done / 2
+
+compose_colorburn :
+  e[^-1] "Compose image$? two-by-two, using colorburn mode."
+  repeat int($!/2) l[$>,{$>+1}]
+    to_colormode 0 ri. ..,0,0,0.5,0.5 -.. 255 +. 0.1 /
+  done done * 256 + 255 c 0,255
+
+compose_darken :
+  e[^-1] "Compose image$? two-by-two, using darken mode."
+  repeat int($!/2) l[$>,{$>+1}]
+    to_colormode 0 ri. ..,0,0,0.5,0.5 min
+  done done
+
+compose_difference :
+  e[^-1] "Compose image$? two-by-two, using difference mode."
+  repeat int($!/2) l[$>,{$>+1}]
+    to_colormode 0 ri. ..,0,0,0.5,0.5 -
+  done done abs
+
+compose_divide :
+  e[^-1] "Compose image$? two-by-two, using divide mode."
+  repeat int($!/2) l[$>,{$>+1}]
+    to_colormode 0 ri. ..,0,0,0.5,0.5 *.. 256 +. 1 /
+  done done c 0,255
+
+compose_dodge :
+  e[^-1] "Compose image$? two-by-two, using dodge mode."
+  repeat int($!/2) l[$>,{$>+1}]
+    to_colormode 0 ri. ..,0,0,0.5,0.5 -. 255.1 /
+  done done * -256 c 0,255
+
+compose_edges : check {$1>=0}
+  e[^-1] "Compose image$? using edge mode, with smoothness $1."
+  if $!>1 - to_rgb r[^0] {0,[w,h,d,s]},0,0,0.5,0.5 repeat $! l[$>]
+    +gradient_norm +. 1 b. $1 n. 1,10 sqr. s.. c *[-4--2] . a[-4--1] c
+  done done r[^0] {0,[w,h,d,s]},0,0,0.5,0.5 + s. c /[-4--2] . rm. a[-3--1] c fi
+
+compose_exclusion :
+  e[^-1] "Compose image$? two-by-two, using exclusion mode."
+  repeat int($!/2) l[$>,{$>+1}]
+    to_colormode 0 ri. ..,0,0,0.5,0.5 +*.. . /. -128 +
+  done done
+
+compose_fade :
+  e[^-1] "Compose image$? using fading mode."
+  r[^0] ${-max_whd},100%,3
+  r[1--2] 100%,100%,100%,${-max_s} channels. 0
+  repeat $!-1 +-. $> abs. -. 1 *. -1 max. 0 *[$>,-1] done
+  rm. +
+
+compose_freeze :
+  e[^-1] "Compose image$? two-by-two, using freeze mode."
+  repeat int($!/2) l[$>,{$>+1}]
+    to_colormode 0 ri. ..,0,0,0.5,0.5 -.. 255 sqr.. +. 0.1 /
+  done done - 255 * -1 c 0,255
+
+compose_grainextract :
+  e[^-1] "Compose image$? two-by-two, using grain extract mode."
+  repeat int($!/2) l[$>,{$>+1}]
+    to_colormode 0 ri. ..,0,0,0.5,0.5 -
+  done done + 128 c 0,255
+
+compose_grainmerge :
+  e[^-1] "Compose image$? two-by-two, using grain merge mode."
+  repeat int($!/2) l[$>,{$>+1}]
+    to_colormode 0 ri. ..,0,0,0.5,0.5 +
+  done done - 128 c 0,255
+
+compose_hardlight :
+  e[^-1] "Compose image$? two-by-two, using hard light mode."
+  repeat int($!/2) l[$>,{$>+1}]
+    to_colormode 0 ri. ..,0,0,0.5,0.5
+    +ge. 128 +*... .. /. 128
+    -[-4,-3] 255 *[-4,-3] /... 128 -... 255 *... -1
+    *... .. *.. -1 +.. 1 *[-2,-1] +
+  done done
+
+compose_hue :
+  e[^-1] "Compose image$? two-by-two, using hue mode."
+  repeat int($!/2) l[$>,{$>+1}]
+    to_colormode 0 ri. ..,0,0,0.5,0.5 to_rgba sh 0,2
+    rgb2hsv[-2,-1] sh.. 0,0 j.. . rm[-5,-3,-1] hsv2rgb. rm.
+  done done
+
+compose_interpolation :
+  e[^-1] "Compose image$? two-by-two, using interpolation mode."
+  repeat int($!/2) l[$>,{$>+1}]
+    to_colormode 0 ri. ..,0,0,0.5,0.5 * 0.012271846 cos / -4 +
+  done done + 0.5 * 256
+
+compose_lighten :
+  e[^-1] "Compose image$? two-by-two, using lighten mode."
+  repeat int($!/2) l[$>,{$>+1}]
+    to_colormode 0 ri. ..,0,0,0.5,0.5 max
+  done done
+
+compose_lightness :
+  e[^-1] "Compose image$? two-by-two, using lightness mode."
+  repeat int($!/2) l[$>,{$>+1}]
+    to_colormode 0 ri. ..,0,0,0.5,0.5 to_rgba sh 0,2
+    rgb2lab[-2,-1] sh.. 0,0 j.. .,0,0,0,0 rm[-5,-3,-1] lab2rgb. rm.
+  done done
+
+compose_luminance :
+  e[^-1] "Compose image$? two-by-two, using luminance mode."
+  repeat int($!/2)
+    to_colormode[-2,-1] 0 ri. ..,0,0,0.5,0.5 to_rgba[-2,-1] sh[-2,-1] 0,2
+    rgb2ycbcr[-2,-1] sh.. 0,0 j.. .,0,0,0,0 rm[-5,-3,-1] ycbcr2rgb. rm.
+  mv. 0 done
+
+compose_median :
+  e[^-1] "Compose image$? using median mode."
+  if $!==1 return fi
+  r[^0] [0],0,0,0.5,0.5 a z permute zxyc s y,-64
+  repeat $! l[$>]
+    r 100%,{w*100}%
+    s z median {w} w={w} columns {int(w/2)} r 1,{h/$w} a z
+  done done a y permute yzxc
+
+compose_multiply :
+  e[^-1] "Compose image$? two-by-two, using multiply mode."
+  repeat int($!/2) l[$>,{$>+1}]
+    to_colormode 0 ri. ..,0,0,0.5,0.5 *
+  done done / 255
+
+compose_negation :
+  e[^-1] "Compose image$? two-by-two, using negation mode."
+  repeat int($!/2) l[$>,{$>+1}]
+    to_colormode 0 ri. ..,0,0,0.5,0.5 +
+  done done - 255 abs - 255 * -1
+
+compose_overlay :
+  e[^-1] "Compose image$? two-by-two, using overlay mode."
+  repeat int($!/2) l[$>,{$>+1}]
+    to_colormode 0 ri. ..,0,0,0.5,0.5
+    +ge.. 128
+    +*... .. /. 128
+    -[-4,-3] 255 *[-4,-3] /... 128 -... 255 *... -1
+    *... .. *.. -1 +.. 1 *[-2,-1] +
+  done done
+
+compose_reflect :
+  e[^-1] "Compose image$? two-by-two, using reflect mode."
+  repeat int($!/2) l[$>,{$>+1}]
+    to_colormode 0 ri. ..,0,0,0.5,0.5 sqr.. -. 255.1 /
+  done done * -1 c 0,255
+
+compose_rgba :
+  e[^-1] "Compose image$? two-by-two, using alpha blending."
+  to_rgb[0--1:2] compose_alpha
+
+compose_saturation :
+  e[^-1] "Compose image$? two-by-two, using saturation mode."
+  repeat int($!/2) l[$>,{$>+1}]
+    to_colormode 0 ri. ..,0,0,0.5,0.5 to_rgba sh 0,2
+    rgb2hsv[-2,-1] sh.. 1,1 j.. .,0,0,0,1 rm[-5,-3,-1] hsv2rgb. rm.
+  done done
+
+compose_screen :
+  e[^-1] "Compose image$? two-by-two, using screen mode."
+  repeat int($!/2) l[$>,{$>+1}]
+    to_colormode 0 ri. ..,0,0,0.5,0.5 - 255 *
+  done done / 256 - 255 * -1
+
+compose_shapeaverage :
+  e[^-1] "Compose image$? two-by-two, using shape average mode."
+  repeat int($!/2) l[-2,-1] nm={0,n}
+    channels. 0 ge. 50% label_fg. 0 nb={iM+1} *. 256
+    rv[-2,-1] m={im} M={iM} n. 0,255 s. c +[^0] [0]
+    repeat $!-1
+      histogram. {$nb*256},0,{$nb*256-1}
+      i.. 256,1,1,1,'x' r.. {w},1,1,1,0,2 *.. . r[-2,-1] $nb,1,1,1,2 max. 1 /[-2,-1]
+    mv. 1 done
+    /[0] 256 a[^0] c *. {($M-$m)/256} +. $m point. 0,0,0,1,0 map[0] . rm.
+  nm $nm,1 done mv. 0 done
+
+compose_softlight :
+  e[^-1] "Compose image$? two-by-two, using soft light mode."
+  repeat int($!/2) l[$>,{$>+1}]
+    to_colormode 0 ri. ..,0,0,0.5,0.5 / 256 +*.. . *. 2 sqr... *.. ... *.. -2 +
+  done done * 256
+
+compose_stamp :
+  e[^-1] "Compose image$? two-by-two, using stamp mode."
+  repeat int($!/2) l[$>,{$>+1}]
+    to_colormode 0 ri. ..,0,0,0.5,0.5 *. 2 +
+  done done - 255 c 0,255
+
+compose_value :
+  e[^-1] "Compose image$? two-by-two, using value mode."
+  repeat int($!/2) l[$>,{$>+1}]
+    to_colormode 0 ri. ..,0,0,0.5,0.5 to_rgba sh 0,2
+    rgb2hsv[-2,-1] sh.. 2,2 j.. .,0,0,0,2 rm[-5,-3,-1] hsv2rgb. rm.
+  done done
+
+compose_xor :
+  e[^-1] "Compose image$? two-by-two, using xor mode."
+  repeat int($!/2) l[$>,{$>+1}]
+    to_colormode 0 ri. ..,0,0,0.5,0.5 xor
+  done done
+
+_fx_compose :
+  repeat int($!/2) +compose_$1[-2,-1] rm... to_rgba. sh. 3,3 *. $2 rm. compose_alpha[-2,-1] mv. 0 done
+
+_fx_revert_layers :
+  repeat int($!/2) rv[{2*$>},{2*$>+1}] done
+
+fx_compose_average :
+  if ${2=0} _fx_revert_layers fi
+  _fx_compose average,$1
+
+fx_compose_colorburn :
+  if ${2=0} _fx_revert_layers fi
+  _fx_compose colorburn,$1
+
+fx_compose_darken :
+  if ${2=0} _fx_revert_layers fi
+  _fx_compose darken,$1
+
+fx_compose_difference :
+  if ${2=0} _fx_revert_layers fi
+  to_rgb _fx_compose difference,$1
+
+fx_compose_divide :
+  if ${2=0} _fx_revert_layers fi
+  _fx_compose divide,$1
+
+fx_compose_dodge :
+  if ${2=0} _fx_revert_layers fi
+  _fx_compose dodge,$1
+
+fx_compose_edges :
+  if ${3=0} _fx_revert_layers fi
+  repeat int($!/2) +compose_edges[-2,-1] $2 rm... to_rgba. sh. 3,3 *. $1 rm. compose_alpha[-2,-1] mv. 0 done
+
+fx_compose_exclusion :
+  if ${2=0} _fx_revert_layers fi
+  to_rgb _fx_compose exclusion,$1
+
+fx_compose_fade :
+  if $!==1 return fi
+  to_colormode 4
+  if $1==0 [0],[0],1,1,"$10"
+  else _fx_compose_fade$1 $7,$8,$9 r. [0],[0],1,1,3
+  fi
+  n. {-($!-2)*$3},{($!-2)*(1+$3)}
+  -. {$2*(1+$3)*($!-2)}
+  c. 0,{$!-2}
+  if $6 rv[^-1] fi
+  if $5 round. 1
+  else roundify. $4
+  fi
+  compose_fade
+  c 0,255
+
+_fx_compose_fade1 : [0],[0],1,1,"a=$1*pi/2; x*cos(a) + y*sin(a)"
+_fx_compose_fade2 : [0],[0],1,1,0 -=. 1,{($1+1)*50}%,{($2+1)*50}% distance. 1
+_fx_compose_fade3 : [0],[0],1,1,0 -=. 1,{($1+1)*50}%,{($2+1)*50}% distance. 1 *. {0.01+$3/2} cos.
+_fx_compose_fade4 : [0],[0],1,1,"((x-w*($1+0.5))*(y-h*($2+0.5)))%(0.2*w*h*(1.001+$3))"
+
+fx_compose_freeze :
+  if ${2=0} _fx_revert_layers fi
+  _fx_compose freeze,$1
+
+fx_compose_grainextract :
+  if ${2=0} _fx_revert_layers fi
+  _fx_compose grainextract,$1
+
+fx_compose_grainmerge :
+  if ${2=0} _fx_revert_layers fi
+  _fx_compose grainmerge,$1
+
+fx_compose_hardlight :
+  if ${2=0} _fx_revert_layers fi
+  _fx_compose hardlight,$1
+
+fx_compose_hue : skip ${2=0}
+  if ${2=0} _fx_revert_layers fi
+  _fx_compose hue,$1
+
+fx_compose_interpolation :
+  if ${2=0} _fx_revert_layers fi
+  _fx_compose interpolation,$1
+
+fx_compose_lighten :
+  if ${2=0} _fx_revert_layers fi
+  _fx_compose lighten,$1
+
+fx_compose_lightness : skip ${2=0}
+  if ${2=0} _fx_revert_layers fi
+  _fx_compose lightness,$1
+
+fx_compose_luminance : skip ${2=0}
+  if ${2=0} _fx_revert_layers fi
+  _fx_compose luminance,$1
+
+fx_compose_multiply :
+  if ${2=0} _fx_revert_layers fi
+  _fx_compose multiply,$1
+
+fx_compose_negation :
+  if ${2=0} _fx_revert_layers fi
+  to_rgb _fx_compose negation,$1
+
+fx_compose_overlay :
+  if ${2=0} _fx_revert_layers fi
+  _fx_compose overlay,$1
+
+fx_compose_reflect :
+  if ${2=0} _fx_revert_layers fi
+  _fx_compose reflect,$1
+
+fx_compose_saturation : skip ${2=0}
+  if ${2=0} _fx_revert_layers fi
+  _fx_compose saturation,$1
+
+fx_compose_screen :
+  if ${2=0} _fx_revert_layers fi
+  _fx_compose screen,$1
+
+fx_compose_shapeaverage :
+  if ${3=0} _fx_revert_layers fi
+  to_rgb
+  repeat int($!/2)
+    rv[-2,-1]
+    if $1 i[0] . fi
+    compose_shapeaverage[-2,-1]
+    if $1 *[0,-1] /[0] 255 mv[0] $! fi
+    if $2 to_rgba. replace_color. 0,0,0,0,0,255,0,0,0,0 fi
+  mv. 0 done
+
+fx_compose_softlight :
+  if ${2=0} _fx_revert_layers fi
+  _fx_compose softlight,$1
+
+fx_compose_stamp :
+  if ${2=0} _fx_revert_layers fi
+  _fx_compose stamp,$1
+
+fx_compose_value : skip ${2=0}
+  if ${2=0} _fx_revert_layers fi
+  _fx_compose value,$1
+
+fx_compose_xor :
+  if ${2=0} _fx_revert_layers fi
+  to_rgb _fx_compose xor,$1
+
+#@gui Contrast Swiss Mask : fx_contrast_swm , fx_contrast_swm(0)
+#@gui : sep = separator()
+#@gui : Blur the Mask = float(2,0.5,10)
+#@gui : sep = separator()
+#@gui : note = note ("Contrast Mask need the negative of the mask")
+#@gui : Skip to Use the Mask to Boost = bool(false)
+#@gui : note = note ("Uncheck for Contrast Mask,Check for Contrast Boost")
+#@gui : sep = separator()
+#@gui : note = note("Merge the Mask")
+#@gui : Intensity = float(1,0,1)
+#@gui : sep = separator()
+#@gui : note = note("<small>Author: <i>PhotoComiX</i>.      Latest Update: <i>2011/01/01</i>.</small>")
+#@gui : url = link("Filter explained here","http://www.gimpchat.com/viewtopic.php?f=9&t=864")
+fx_contrast_swm :
+  foreach {
+    split_opacity l[0] {
+     +luminance to_rgb
+      b. $1
+      if !$2 negate[1] fi
+      rv blend hardlight,$3
+    }
+    a c
+  }
+
+# (End of G'MIC custom commands)

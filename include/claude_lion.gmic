@@ -1,0 +1,922 @@
+#@gmic
+#
+#  File        : claude_lion.gmic
+#                ( G'MIC commands file )
+#
+#  Description : Define a gmic command
+#
+#  Copyright   : Claude Lion
+#
+#  License         :
+#
+#                    CeCILL v2.1
+#                    The CeCILL license is compatible with the GNU GPL.
+#                    ( http://cecill.info/licences/Licence_CeCILL_V2.1-en.html )
+#
+#  This software is governed either by the CeCILL or the CeCILL-C license
+#  under French law and abiding by the rules of distribution of free software.
+#  You can  use, modify and or redistribute the software under the terms of
+#  the CeCILL or CeCILL-C licenses as circulated by CEA, CNRS and INRIA
+#  at the following URL: "http://cecill.info".
+#
+#  As a counterpart to the access to the source code and  rights to copy,
+#  modify and redistribute granted by the license, users are provided only
+#  with a limited warranty  and the software's author,  the holder of the
+#  economic rights,  and the successive licensors  have only  limited
+#  liability.
+#
+#  In this respect, the user's attention is drawn to the risks associated
+#  with loading,  using,  modifying and/or developing or reproducing the
+#  software by the user in light of its specific status of free software,
+#  that may mean  that it is complicated to manipulate,  and  that  also
+#  therefore means  that it is reserved for developers  and  experienced
+#  professionals having in-depth computer knowledge. Users are therefore
+#  encouraged to load and test the software's suitability as regards their
+#  requirements in conditions enabling the security of their systems and/or
+#  data to be ensured and,  more generally, to use and operate it in the
+#  same conditions as regards security.
+#
+#  The fact that you are presently reading this means that you have had
+#  knowledge of the CeCILL and CeCILL-C licenses and that you accept its terms.
+#
+
+#@gui _<b>Artistic</b>
+#@gui Comicbook: cl_comic, cl_comic_preview(0)
+#@gui : note = note("<b>Note</b>: Photo to cartoon")
+#@gui : sep = separator()
+#@gui : note = note(" ")
+#@gui : Simplification = choice(0, "None", "Light", "Light Antialias", "Strong Antialias", "Median", "Iuwt", "Thin Brush", "Mean Curvature")
+#@gui : sep = separator()
+#@gui : note = note("<b>For edges:</b>")
+#@gui : Flattening for Edge (bilateral) = int(2,0,5)
+#@gui : Edge Method = choice(0, "Diff. of Gauss.", "Diff. of BoxBlur", "Diff. of Median")
+#@gui : Edge Desaturation Method = choice(1, "Lightness", "MaxRGB", "MinRGB")
+#@gui : Line Thickness = float(1,0.5,2)
+#@gui : Line Strength = float(15,0,19)
+#@gui : Line Antialias = int(15,0,100)
+#@gui : sep = separator()
+#@gui : Add Colors = bool(1)
+#@gui : note = note("<b>For colors:</b>")
+#@gui : Luminosity Increase = int(10,0,50)
+#@gui : Saturation Increase = int(20,0,50)
+#@gui : Final Flattening (bilateral) = int(6,0,10)
+#@gui : Color Effect = choice(2, "None", "Deep Black", "Local Contrast Enhancement", "Colorful")
+#@gui : Flat Color Effect = choice(0, "None", "Rainbow", "Hard Rainbow", "Posterize Softly", "Super Flat")
+#@gui : Colors to Black or White = choice(0, "No", "Soft Threshold", "Threshold with Soft Antialias", "Lines and Black")
+#@gui : sep = separator()
+#@gui : Relief Effect = choice(0, "None", "Groove", "Bump")
+#@gui : Special Effect = choice(0, "None", "Dream", "Past", "Sketch of Future")
+#@gui : sep = separator()
+#@gui : Final Antialias = choice(0, "None", "Simple", "Double")
+#@gui : sep = separator()
+#@gui : Preview Type = choice("Full","Forward Horizontal","Forward Vertical","Backward Horizontal",
+#@gui : "Backward Vertical","Duplicate Top","Duplicate Left","Duplicate Bottom","Duplicate Right",
+#@gui : "Duplicate Horizontal","Duplicate Vertical","Checkered","Checkered Inverse")
+#@gui : Preview Split = point(50,50,0,0,200,200,200,0,10)_0
+#@gui : sep = separator()
+#@gui : url = link("Filter discussed here","http://gimpchat.com/viewtopic.php?f=11&t=19335&p=266517#p266512")
+#@gui : note = note("<small>Author: <i>Claude Lion</i>.      Latest Update: <i>2022/05/10</i>.</small>")
+#@gui : note = note("<small>It uses filters of David Tschumperlé and a few filters of Jérôme Boulanger.</small>")
+cl_comic :
+        _output_mode=0
+	foreach {
+
+	simplif=$1
+	nbBilatBord=$2
+	methBord=$3
+	methDesat=$4
+	lineThick=$5
+	forceTrait=$6
+	antialias=$7
+	addColors=$8
+	augmLum=$9
+	augmSat=$10
+	nbBilatFin=$11
+	colorEffect=$12
+	flatColorEffect=$13
+	bw=$14
+	reliefEffect=$15
+	specialEffect=$16
+	finalAntialias=$17
+
+
+	if $simplif==2
+		fx_smooth_antialias. 100,0,2.5,0,50,50
+	elif $simplif==3
+		fx_smooth_antialias. 100,0,5,0,50,50
+	elif $simplif==4
+		fx_smooth_median. 3,255,0,0,50,50
+	elif $simplif==5
+		jeje_denoise_iuwt. 3,4,2,0
+		jeje_denoise_iuwt. 3,4,2,0
+	elif $simplif==6
+		fx_smooth_anisotropic. 60,0.9,0.64,3.1,1.1,0.8,30,2,0,1,1,0,0,24
+	elif $simplif==7
+		meancurvature_flow. 20
+	fi
+
+	curv="0,0,"{50-$augmLum}","{50+$augmLum}",100,100,-1,0,0,"{50-$augmSat}","{50+$augmSat}",100,100,-1,0,0,100,100,-1,0,0,100,100,-1"
+	+fx_curves_interactive.  7,0,1,"7",$curv
+	fx_smooth_nlmeans.. 4,4,10,5,0,0,24,0
+	fx_smooth_bilateral.. 10,7,$nbBilatBord,0,0
+
+	+cut.. 0,255
+	reverse[-2,-1]
+
+	if $methBord==0
+		blur[-3] {$lineThick}
+	elif $methBord==1
+		boxfilter[-3] xy,{$lineThick+0.01}
+	elif $methBord==2
+		median[-3] {($lineThick+0.01)*2}
+	fi
+	sub[-3,-2]
+
+	if $methDesat==0
+		fill.. "m = min(R,G,B); M = max(R,G,B); L = 0.5*(m + M); [L, L, L]"
+	elif $methDesat==1
+		fill.. "M = max(R,G,B); [M, M, M]"
+	elif $methDesat==2
+		fill.. "M = min(R,G,B); [M, M, M]"
+	fi
+
+	cut.. 0,255 n.. 0,255
+	negate..
+	threshold.. {$forceTrait+80}%
+	n.. 0,255
+
+	if $simplif>0
+		fx_smooth_antialias.. 100,0,2.5,0,50,50
+		fx_curves_interactive.. 7,0,1,"7","0,0,69,0,70,100,100,100,-1,0,0,100,0,-1,0,0,100,100,-1,0,0,100,100,-1"
+	fi
+
+	fx_smooth_antialias.. $antialias,0,1,0,50,50
+
+	if $addColors==1
+		mul[-2,-1]
+		n. 0,255
+		fx_smooth_bilateral. 10,7,$nbBilatFin,0,0
+
+
+
+		if $colorEffect==1
+			fx_custom_transform. "i","if(i<64,0, sqrt((i-64)/(256-64))*256  )","i","i","i","i",0
+		elif $colorEffect==2
+			fx_LCE. 80,0.5,1,1,0,0
+		elif $colorEffect==3
+			remove_opacity.
+			rgb2hsv. split. c =>. val =>.. sat =>... hue
+			+mul[val] [sat] =>. ref
+			sqrt[ref]
+			+sub[ref] 1 =>. subRef
+			sub[val] 1 *[val] [subRef] negate[val]
+			sub[sat] 1 *[sat] [subRef] negate[sat]
+			rm[ref] rm[subRef]
+			append[-3--1] c
+			hsv2rgb.
+			#n. 0,255
+		fi
+
+		if $flatColorEffect==1
+			(255,0,0,0,0,0,0,0,0,0,0,64,128,192,255,255,255,255,255,255,255,255,255,192,128,64^255,0,0,64,128,192,255,255,255,255,255,255,255,255,255,192,128,64,0,0,0,0,0,0,0,0^255,0,255,255,255,255,255,192,128,64,0,0,0,0,0,0,0,0,0,64,128,192,255,255,255,255)
+			remove_opacity..
+			index.. [-1],0,1
+			rm.
+			fx_smooth_antialias. 15,0,1,0,50,50
+		elif $flatColorEffect==2
+			otsu. 256 n. 0,255
+			fx_smooth_antialias. 15,0,1,0,50,50
+		elif $flatColorEffect==3
+			fx_posterize. 150,30,1,32,0,0,0,0,50,50
+			fx_custom_transform. "i","if(i<64,0, sqrt((i-64)/(256-64))*256  )","i","i","i","i",0
+		elif $flatColorEffect==4
+			if s==4 split_opacity. rm. fi
+			+colormap. 8
+			index.. [-1],0,1
+			rm.
+			rgb2hsl. split. c
+			n. 0,1
+			append c hsl2rgb
+		fi
+
+
+		remove_opacity.
+		if $bw==1
+			fx_curves_interactive. 7,0,1,"7","0,0,16,100,100,100,-1,0,0,100,0,-1,0,0,100,100,-1,0,0,100,100,-1"
+		elif $bw==2
+			fx_blackandwhite. 0.299,0,0.587,0,0.114,0,0,0,0,0,0,0,0,0,2,0,0,0,16,4,0,0,0,50,50
+			threshold. 33% n 0,255
+			fx_smooth_antialias. 100,0.5,5,0,50,50
+			fx_smooth_antialias. 100,0.5,5,0,50,50
+		elif $bw==3
+			fx_blackandwhite. 0.299,0,0.587,0,0.114,0,0,0,0,0,0,0,0,0,2,0,0,0,16,4,0,0,0,50,50
+			otsu 4
+			n 0,255
+		fi
+	else
+		remove[-1]
+	fi
+
+	if $reliefEffect==1
+		# inspired by emboss_image of Reptorian
+		+fx_curves_interactive. 7,0,1,"7","0,0,16,100,100,100,-1,0,0,100,0,-1,0,0,100,100,-1,0,0,100,100,-1"
+		l.
+			b. 3
+			gradient2rgb. 0 n. 0,255
+			[-1]
+			rgb2hsv[-2,-1] split[-2,-1] c
+
+			l[-3--1] +[-3] {315} %[-3] 360 done
+			l[-6--4] +[-3] {135} %[-3] 360 done
+			l[-3--1] a c hsv2rgb s c done
+			l[-6--4] a c hsv2rgb s c done
+			rm[^-6,-3]
+			negate..
+			/ 2
+			+. 128
+			blend grainmerge,1
+		done
+		to_rgb
+		blend grainmerge,1
+	elif $reliefEffect==2
+		fx_frame. 0,100,0,100,0,0,255,255,255,255,2,0,0,0,255
+		fx_custom_transform. "i","if(i<64,0, sqrt((i-64)/(256-64))*256  )","i","i","i","i",0
+		fx_illuminate_shape2d. 0,0,0,0,0,255,1,1,4,0,0,3,1,1,4,10,75,30,40,40,80,0.2,1,0,0,-2,-2,2,0,0,0
+		crop. 2,2,{w-4},{h-4}
+	fi
+
+	if $specialEffect==1
+		+blur. 12.5
+		add[-2,-1] *. 0.8 add. 40
+		cut. 0,255
+		fx_smooth_antialias. 100,2,5,0,50,50
+		fx_frame_fuzzy. 12,12,30,5,255,255,255,255
+		jeje_clouds. 50,0.5
+	elif $specialEffect==2
+		fx_curves_interactive. 7,0,1,"7","0,0,100,100,-1,0,0,65,35,100,100,-1,0,0,50,50,100,100,-1,0,0,100,100,-1"
+		fx_stripes_y. 4,0,0,0,50,50
+		fx_simulate_grain. 0,1,0.2,100,0,0,0,0,0,0,0,0,0
+		fx_dirty. 1,1,0,0,0,50,50
+	elif $specialEffect==3
+		+fx_smooth_antialias. 100,0,5,0,50,50
+		fx_smooth_antialias. 100,0,5,0,50,50
+		fx_smooth_antialias. 100,0,5,0,50,50
+		fx_hardsketchbw. 80,100,1,0.1,50,0,0,0,50,50
+		fx_smooth_antialias. 100,0,5,0,50,50
+		fx_smooth_antialias. 100,0,5,0,50,50
+		otsu. 4 n. 0,255
+		fx_smooth_antialias. 15,0,1,0,50,50
+		fx_smooth_antialias. 50,50,2.5,0,50,50
+		blur.. 10
+		fx_smooth_bilateral.. 10,7,6,0,0
+		mul[-2,-1] n. 0,255
+	fi
+
+	if $finalAntialias==1
+		fx_smooth_antialias 50,50,2.5,0,50,50
+	elif $finalAntialias==2
+		fx_smooth_antialias. 15,0,1,0,50,50
+		fx_smooth_antialias 50,50,2.5,0,50,50
+	fi
+
+	}
+
+cl_comic_preview :
+  gui_split_preview "cl_comic $*",${-3--1}
+
+
+#@gui _<b>Black & White</b>
+#@gui Lineart: cl_lineart, cl_lineart_preview(0)
+#@gui : note = note("<b>Photo to Line Art</b>")
+#@gui : sep = separator()
+#@gui : note = note(" ")
+#@gui : Local Contrast Enhancement = int(0,0,4)
+#@gui : Simplification = bool(0)
+#@gui : sep = separator()
+#@gui : note = note("<b>For edges:</b>")
+#@gui : Flattening for Edge (bilateral) = int(2,0,5)
+#@gui : Line Thickness = float(1,0.5,2)
+#@gui : Line Strength = float(15,0,19)
+#@gui : Lines Antialias = int(15,0,100)
+#@gui : sep = separator()
+#@gui : Add Black or Gray = bool(1)
+#@gui : note = note("<b>For black and grays:</b>")
+#@gui : Luminosity Increase = int(0,0,40)
+#@gui : Final Flattening (bilateral) = int(6,0,10)
+#@gui : Type = choice(2, "Soft Threshold", "Gray Patches", "Lines and Black", "Black and Lines")
+#@gui : sep = separator()
+#@gui : Final Antialias = choice(2, "None", "Light Simple", "Simple", "Very Strong")
+#@gui : Pen Drawing = choice(0, "None", "Simple", "Undoing Patterns")
+#@gui : sep = separator()
+#@gui : Effect = choice(0, "None", "Charcoal", "Groove")
+#@gui : sep = separator()
+#@gui : Preview Type = choice("Full","Forward Horizontal","Forward Vertical","Backward Horizontal",
+#@gui : "Backward Vertical","Duplicate Top","Duplicate Left","Duplicate Bottom","Duplicate Right",
+#@gui : "Duplicate Horizontal","Duplicate Vertical","Checkered","Checkered Inverse")
+#@gui : Preview Split = point(50,50,0,0,200,200,200,0,10)_0
+#@gui : sep = separator()
+#@gui : url = link("Filter discussed here","http://gimpchat.com/viewtopic.php?f=15&t=5328&start=20#p272779")
+#@gui : note = note("<small>Author: <i>Claude Lion</i>.      Latest Update: <i>2022/05/10</i>.</small>")
+#@gui : note = note("<small>It uses filters of David Tschumperlé and a few filters of Jérôme Boulanger.</small>")
+#@gui : note = note("<small>Type='Lines and Black' is a shortcut of 'Black and Lines' with 'Local Contrast Enhancement = 1' and 'Luminosity Increase = 40'. In this case, 'Local Contrast Enhancement' and 'Luminosity Increase' cursors have no effect.</small>")
+
+cl_lineart:
+	locContEnh=$1
+	simplif=$2
+	nbBilatBord=$3
+	lineThick=$4
+	forceTrait=$5
+	antialias=$6
+	addGrays=$7
+	augmLum=$8
+	nbBilatFin=$9
+	type=$10
+	finalAntialias=$11
+	penDrawing=$12
+	effect=$13
+
+	foreach {
+
+		if $type==2
+			locContEnh=1
+			augmLum=40
+		fi
+
+		if $penDrawing==2
+			fx_smooth_anisotropic. 60,0.9,0.64,3.1,1.1,0.8,30,2,0,1,1,0,0,24
+		fi
+
+		fx_LCE. 80,{$locContEnh/2},1,1,0,0
+
+		if $simplif==1
+			fx_smooth_antialias. 100,0,5,0,50,50
+		fi
+
+		curv="0,0,"{50-$augmLum}","{50+$augmLum}",100,100,-1,0,0,30,70,100,100,-1,0,0,100,100,-1,0,0,100,100,-1"
+		+fx_curves_interactive.  7,0,1,"7",$curv
+		fx_smooth_nlmeans.. 4,4,10,5,0,0,24,0
+		fx_smooth_bilateral.. 10,7,$nbBilatBord,0,0
+
+		+cut.. 0,255
+		reverse[-2,-1]
+		blur[-3] {$lineThick}
+		sub[-3,-2]
+
+		fill.. "M = max(R,G,B); [M, M, M]"
+
+		cut.. 0,255 n.. 0,255
+		negate..
+		threshold.. {$forceTrait+80}%
+		n.. 0,255
+
+		fx_smooth_antialias.. $antialias,0,1,0,50,50
+
+		if $addGrays==1
+			mul[-2,-1]
+			n. 0,255
+			fx_smooth_bilateral. 10,7,$nbBilatFin,0,0
+
+
+			if $type==0
+				fx_curves_interactive. 7,0,1,"7","0,0,60,0,80,100,100,100,-1,0,0,100,0,-1,0,0,100,100,-1,0,0,100,100,-1"
+			elif $type==1
+				remove_opacity.
+				+colormap. 8
+				index.. [-1],0,1
+				rm.
+				rgb2hsl. split. c
+				n. 0,1
+				append c hsl2rgb
+				fx_blackandwhite. 0.299,0,0.587,0,0.114,0,0,0,0,0,0,0,0,0,2,0,0,0,16,4,0,0,0,50,50
+				fx_curves_interactive. 7,0,1,"7","0,0,20,80,100,100,-1,0,0,100,100,-1,0,0,100,100,-1,0,0,100,100,-1"
+			elif $type>=2
+				fx_blackandwhite. 0.299,0,0.587,0,0.114,0,0,0,0,0,0,0,0,0,2,0,0,0,16,4,0,0,0,50,50
+				otsu 4
+				n 0,255
+			fi
+		else
+			remove[-1]
+		fi
+
+		if $finalAntialias==1
+			fx_smooth_antialias. 15,0,1,0,50,50
+		elif $finalAntialias==2
+			fx_smooth_antialias. 15,0,1,0,50,50
+			fx_smooth_antialias. 50,50,2.5,0,50,50
+		elif $finalAntialias==3
+			fx_smooth_antialias. 100,0.5,5,0,50,50
+			fx_smooth_antialias. 100,0.5,5,0,50,50
+		fi
+
+		if $penDrawing>=1
+			fx_pen_drawing. 10,0,50,50
+			n 0,255
+			otsu 4
+			n 0,255
+			fx_smooth_antialias. 15,0,1,0,50,50
+			fx_smooth_antialias. 50,50,2.5,0,50,50
+		fi
+
+		if $effect==1
+			fx_spread. 2,2,0,0,0,50,50
+		elif $effect==2
+			# inspired by emboss_image of Reptorian
+			+fx_curves_interactive. 7,0,1,"7","0,0,16,100,100,100,-1,0,0,100,0,-1,0,0,100,100,-1,0,0,100,100,-1"
+			l.
+				b. 3
+				gradient2rgb. 0 n. 0,255
+				[-1]
+				rgb2hsv[-2,-1] split[-2,-1] c
+
+				l[-3--1] +[-3] {315} %[-3] 360 done
+				l[-6--4] +[-3] {135} %[-3] 360 done
+				l[-3--1] a c hsv2rgb s c done
+				l[-6--4] a c hsv2rgb s c done
+				rm[^-6,-3]
+				negate..
+				/ 2
+				+. 128
+				blend grainmerge,1
+			done
+			to_rgb
+			blend grainmerge,1
+		fi
+
+	}
+
+cl_lineart_preview:
+	gui_split_preview "cl_lineart $*",${-3--1}
+
+#@gui _<b>Frames</b>
+#------------------
+#@gui Frame [Relief]: cl_reliefFrame, cl_reliefFrame(1)
+#@gui : note = note("<b>Frame Limit:</b>")
+#@gui : Type = choice(2, "Outset", "Inset", "Groove", "Ridge")
+#@gui : Size = float(10,6,40)
+#@gui : Relief Width = float(1.5,0,10)
+#@gui : Relief Amount = float(75,0,127)
+#@gui : sep = separator()
+#@gui : note = note("<b>Frame Area:</b>")
+#@gui : Kaleidoscope Effect = bool(1)
+#@gui : Frame Blur = float(60,5,80)
+#@gui : Frame Hue Change = float(0,-180,180)
+#@gui : Frame Saturation Change = float(0,-1,1)
+#@gui : Frame Luminosity Change = float(0,-0.5,0.5)
+#@gui : sep = separator()
+#@gui : note = note("<b>Uniform Frame Color:</b>")
+#@gui : note = note("<small>This overrides "Frame Area" section.</small>")
+#@gui : Set Uniform Frame Color = bool(0)
+#@gui : Frame Color = color(192,192,192)
+#@gui : sep = separator()
+#@gui : note = note("<b>Graininess:</b>")
+#@gui : Graininess Type = choice("Gaussian", "Uniform", "Poisson")
+#@gui : Graininess Amount = float(0,0,80)
+#@gui : Graininess on = choice("Frame", "Picture", "Both")
+#@gui : sep = separator()
+#@gui : url = link("Filter discussed here","http://gimpchat.com/viewtopic.php?f=28&t=20005#p274661")
+#@gui : note = note("<small>Author: <i>Claude Lion</i>. Latest Update: <i>2022/08/26</i>.</small>")
+#@gui : note = note("<small>It uses filters of David Tschumperlé and an algorithm of Reptorian.</small>")
+
+cl_reliefFrame:
+
+	frameType,frameSize,reliefWidth,reliefAmount,kaleido,frameBlur,frameHue,frameSat,frameLum,unifColor,colorR,colorG,colorB,grainType,grainAmount,grainFrameOn=$*
+
+	if $grainType==2
+		grainType=3
+	fi
+
+	foreach {
+		remove_opacity.
+
+		[-1]
+
+		if $unifColor==0
+			if $kaleido
+				fx_kaleidoscope. 50,50,0,0,100,10,2
+			fi
+			b. $frameBlur
+
+			l.
+				rgb2hsl split c
+				+. $frameLum c. 0,1
+				+.. $frameSat c.. 0,1
+				+... $frameHue %... 360
+				a c hsl2rgb
+			done
+		elif $unifColor==1
+			fill. [$colorR,$colorG,$colorB]
+		fi
+
+		if $grainFrameOn==0
+			fx_noise. $grainAmount,$grainType,16,1,0,50,50
+		elif $grainFrameOn==1
+			fx_noise.. $grainAmount,$grainType,16,1,0,50,50
+		fi
+
+		100%,100%,1,1,0
+		fx_frame_round. $frameSize,20,1,255,255,255,255,0,0,3
+		remove_opacity.
+		n. 0,255
+
+		[-1]
+
+		if $frameType>=1 # inset, groove, ridge
+			negate.
+		fi
+
+		if $frameType>=2 # groove, ridge
+			gradient_norm.
+		fi
+
+		if $frameType==3 # ridge
+			negate.
+		fi
+
+		fx_smooth_antialias. 100,10,5,0,50,50
+
+		negate.
+
+
+
+		l.
+			# inspired by emboss_image of Reptorian
+			b. $reliefWidth
+			fill. if(abs(i)<1e-10,0,i) # to work around https://github.com/dtschump/gmic/issues/402
+			gradient2rgb. 0 n. 0,255
+			[-1]
+			rgb2hsv[-2,-1] split[-2,-1] c
+
+			l[-3--1] +[-3] {315} %[-3] 360 done
+			l[-6--4] +[-3] {135} %[-3] 360 done
+			l[-3--1] a c hsv2rgb s c done
+			l[-6--4] a c hsv2rgb s c done
+			rm[^-6,-3]
+			negate..
+			/ 2
+			+. 128
+			blend grainmerge,1
+		done
+		to_rgb.
+
+		apply_curve. 1,0,{127-$reliefAmount},255,{128+$reliefAmount}
+
+		fill[0] i#2*i#1+(255-i#2)*i n[0] 0,255
+		rm.. rm..
+
+		blend grainmerge,1
+		if $grainFrameOn==2
+			fx_noise. $grainAmount,$grainType,16,1,0,50,50
+		fi
+	}
+
+
+cl_circ :
+	# $1 : center x-coordinate
+	# $2 : center y-coordinate
+	# $3 : radius
+	# $4 : stroke width
+
+	fill. stroke(d)=cut($4-abs(d/2),0,1);stroke(sqrt((x-$1)^2+(y-$2)^2)-$3)
+	n. 0,255
+
+cl_innerCirc :
+
+	xC=$1 # center x-coordinate
+	yC=$2 # center y-coordinate
+	radi=$3 # big circle radius
+	wid=$4 # stroke width
+	nb=$5 # number of small circles
+	lvl=$6 # number of levels
+
+	if $lvl>0
+		angl={pi/$nb}
+		sinu={sin($angl)}
+		ra={$radi/(1+1/$sinu)}
+		ray={$radi/(1+$sinu)}
+
+		+fill. 0
+		[-1]x{$nb-1}
+		foreach[1--1] {
+			num=$>
+			xA={$ray*cos(2*$num*$angl)}
+			yA={$ray*sin(2*$num*$angl)}
+			cl_circ {$xC+$xA},{$yC+$yA},$ra,$wid
+			cl_innerCirc {$xC+$xA},{$yC+$yA},$ra,$wid,$nb,{$lvl-1}
+		}
+	fi
+
+#@gui _<b>Rendering</b>
+#------------------
+#@gui Tangential Circles: cl_tangentialCircle, cl_tangentialCircle(1)
+#@gui : note = note("<small>Warning: This is a slow filter and it might consume too much RAM.</small>")
+#@gui : sep = separator()
+#@gui : note = note("<b>Drawing:</b>")
+#@gui : Draw Big Circle = bool(1)
+#@gui : Big Circle Radius = float(100, 10, 1000)
+#@gui : Dimensions = choice[0, "According to Radius", "According to Layer", "According to Layer (Proportionate)", "According to Layer (Scaling)"]
+#@gui : note = note("<small>If you choose "proportionate" or "Scaling", the Big Circle Radius is a percentage of 1/3 of the smaller dimension of the layer. Otherwise, it is a number of pixels.</small>")
+#@gui : Stroke Width = float(1,0.5,10)
+#@gui : Number of Small Circles = int(5, 2, 100)
+#@gui : Number of Levels = int(1, 1, 4)
+#@gui : sep = separator()
+#@gui : note = note("<b>Colors:</b>")
+#@gui : Background Color = color(255,255,255)
+#@gui : Foreground Color = color(0,0,0)
+#@gui : sep = separator()
+#@gui : note = note("<b>Effects:</b>")
+#@gui : Effect = choice(0, "None", "Transparent Background", "Strange Polygons", "Multicolored", "Rainbow", "Double", "Colored Tube", "Red-Yellow Halo", "Blue-Cyan Halo")
+#@gui : sep = separator()
+#@gui : note = note("<small>Note: The preview might be much more aliased than the final result and some effects ignore colors.</small>")
+#@gui : sep = separator()
+#@gui : url = link("Filter discussed here","http://gimpchat.com/viewtopic.php?f=28&t=20121")
+#@gui : note = note("<small>Author: <i>Claude Lion</i>. Latest Update: <i>2022/11/14</i>.</small>")
+#@gui : note = note("<small>It uses filters of David Tschumperlé and Rod/GimpChat and an algorithm of Reptorian.</small>")
+
+cl_tangentialCircle:
+
+	showBig,radi,dime,wid,nb,lvl,backR,backG,backB,foreR,foreG,foreB,effect=$*
+
+	grow=3
+	dimens={$radi*$grow}
+
+	rectWid={if($dime==1||$dime==2,w,$dimens)}
+	rectHei={if($dime==1||$dime==2,h,$dimens)}
+	chanNumb={if($effect,4,3)}
+	$rectWid,$rectHei,1,$chanNumb,255
+	radius={if($dime==2,$radi/300*min(w,h),$radi)}
+
+	local.
+
+		xC={w/2} # center x-coordinate
+		yC={h/2} # center y-coordinate
+
+		if $effect==1
+			backR,backG,backB=$foreR,$foreG,$foreB
+		elif $effect>=7
+			backR,backG,backB=255,255,255
+			foreR,foreG,foreB=0,0,0
+		fi
+
+		foreA=255
+		backA={if($effect==1,0,255)}
+
+		if $showBig==1
+			cl_circ. $xC,$yC,$radius,$wid
+		else
+			n. 0,255
+		fi
+
+		cl_innerCirc. $xC,$yC,$radius,$wid,$nb,$lvl
+
+		blend screen,1
+
+		n. 0,1
+
+		if $effect<=1
+			fill. [i*$foreR+(1-i)*$backR,i*$foreG+(1-i)*$backG,i*$foreB+(1-i)*$backB,i*$foreA+(1-i)*$backA]
+		elif $effect==2
+			fx_rodilius. 15,1,0,$nb,90,0,1,0,0
+			n. 0,1
+			fill. [i*$foreR+(1-i)*$backR,i*$foreG+(1-i)*$backG,i*$foreB+(1-i)*$backB,i*$foreA+(1-i)*$backA]
+			n. 0,255
+		elif $effect==3
+			fx_curvature 10,0,100,0,0
+			fx_gradient2rgb 0,0,100,0,0
+			apply_curve 1,0,0,16,240,255,255
+			fx_smooth_antialias. 15,0,1,0,50,50
+			fx_smooth_antialias. 50,50,2.5,0,50,50
+		elif $effect==4
+			fx_dog 1.4,1.5,0,0,0
+			fx_gradient2rgb 0,0,100,0,0
+			apply_curve 1,0,0,64,192,255,255
+			fx_smooth_antialias. 15,0,1,0,50,50
+			fx_smooth_antialias. 50,50,2.5,0,50,50
+		elif $effect==5
+			dog. 1.4,1.5
+			remove_opacity.
+			n. 0,255
+		elif $effect==6
+			fx_dog. 1.4,1.5,0,0,0
+			apply_curve. 1,0,0,16,0,255,255
+			cut. 0,255
+
+			fx_distance. 0,2,1,0
+			negate. [-1] [-1]
+			fx_decompose_channels 8,1,1,0
+			l.
+				# inspired by emboss_image of Reptorian
+				+apply_curve. 1,0,0,240,16,255,255
+				l.
+					b. 2.5
+					gradient2rgb. 0 n. 0,255
+					[-1]
+					rgb2hsv[-2,-1] split[-2,-1] c
+
+					l[-3--1] +[-3] {315} %[-3] 360 done
+					l[-6--4] +[-3] {135} %[-3] 360 done
+					l[-3--1] a c hsv2rgb s c done
+					l[-6--4] a c hsv2rgb s c done
+					rm[^-6,-3]
+					negate..
+					/ 2
+					+. 128
+					blend grainmerge,1
+				done
+				to_rgb
+				blend grainmerge,1
+			done
+
+			fx_smooth_antialias. 15,0,1,0,50,50
+			fx_smooth_antialias. 50,50,2.5,0,50,50
+			sharpen 300
+		elif $effect>=7
+			fill. [i*$foreR+(1-i)*$backR,i*$foreG+(1-i)*$backG,i*$foreB+(1-i)*$backB,i*$foreA+(1-i)*$backA]
+			remove_opacity.
+			split. c rm. rm..
+			+fx_morphological. 0,2,10,"1,0,1; 0,1,0; 1,0,1",0,0,0,0
+			+fx_morphological. 0,2,20,"1,0,1; 0,1,0; 1,0,1",0,0,0,0
+			if $effect==8 reverse[-3,-1] fi
+			a c
+		fi
+
+	done
+
+	mv[-1] 0
+	if $dime==3 resize[0] {min(w,h)/3}%,{min(w,h)/3}%,1,$chanNumb,5 fi
+
+#@gui Color Wheel: cl_colorWheel, cl_colorWheel(0)
+#@gui : note = note("Warning: This is an enormously gross approximation of the color models.")
+#@gui : note = note("<b>Dimension:</b>")
+#@gui : External Circle Radius = float(200, 10, 1000)
+#@gui : Internal Circle Radius Percentage = float(80, 1, 99)
+#@gui : Parts = choice[0, "x1", "x2", "x3", "x4", "Continuous"]
+#@gui : sep = separator()
+#@gui : note = note("<b>Colors:</b>")
+#@gui : Type = choice[0, "Red-Green-Blue Model", "Red-Yellow-Blue Model", "Opponent Model"]
+#@gui : sep = separator()
+#@gui : note = note("<b>Rotation:</b>")
+#@gui : Inverse Order = bool(0)
+#@gui : Rotation = float(0, 0, 360)
+#@gui : sep = separator()
+#@gui : note = note("<small>Author: <i>Claude Lion</i>. Latest Update: <i>2024/01/23</i>.</small>")
+
+cl_colorWheel:
+
+	extCircle,intCirclePercent,parts,type,invert,rot=$*
+
+	wid={$extCircle*2.5}
+	hig=$wid
+	intCircle={$extCircle*$intCirclePercent/100}
+
+	if $type==2
+		base=2
+	else
+		base=3
+	fi
+
+	if $parts<=3
+		mult={$parts+1}
+	else
+		mult=60
+	fi
+
+	nbParts={$base*$mult}
+
+	if $type==0
+		formula="ang"
+	elif $type==1
+		formula="if(ang<120,ang/2,if(ang<180,ang-60,if(ang<240,ang*2-240,ang)))"
+	elif $type==2
+		formula="if(ang<180,ang*2/3,ang*4/3-120)"
+	fi
+
+	$wid,$hig,1,1
+
+	local.
+		fill. "r = sqrt((x-w/2)^2+ (y-h/2)^2);
+			ang=atan2(y-h/2,x-w/2);
+			"angd=((1-2*$invert)*ang-$rot*pi/180+pi);"
+			"ang=(angd/2/pi-floor(angd/2/pi))*2*pi-pi;"
+			"angp=$nbParts*ang/pi+0.5;"
+			"rnd=floor(angp);"
+			"frc=angp-rnd;"
+			"ang=(rnd-1+cut(frc*r*pi/$nbParts,0,1))*pi/$nbParts;"
+			ang=180*ang/pi+180;
+			"ang=$formula;"
+			"($intCircle<r&&r<$extCircle)*ang"
+		"
+		$wid,$hig,1,1,1
+		$wid,$hig,1,1,1
+		$wid,$hig,1,1,1
+		fill. "r = sqrt((x-w/2)^2+ (y-h/2)^2);
+			"cut(r-$intCircle,0,1)*cut($extCircle-r,0,1)*255"
+		"
+		a c
+		hsv2rgb.
+	done
+	mv[-1] 0
+
+#@gui Equation Plot [Implicit]: cl_implicitEqua, cl_implicitEqua(1)
+#@gui : note = note["<b>Plot the equation: f(x,y)=0</b>"]
+#@gui : note = note["- The x axis is drawn from left to right"]
+#@gui : note = note["- The y axis is drawn from bottom to top"]
+#@gui : note = note["- To reverse an axis, just swap min and max"]
+#@gui : sep = separator()
+#@gui : f(x,y) = text{"( x^2 + y^2 - 25 )   *   ( (x-2)^2 + (y-2)^2 - 1 )   *   ( (x+2)^2 + (y-2)^2 - 1 )   *   ( abs(x) + abs(y) - 1 )   *   ( x^2 + (4*y+12-x^2)^2 - 9 )"}
+#@gui : Width (pixels) = int(500, 10, 2000)
+#@gui : Height (pixels) = int(500, 10, 2000)
+#@gui : Min x = float[-6, -10000, 10000]
+#@gui : Max x = float[6, -10000, 10000]
+#@gui : Min y = float[-6, -10000, 10000]
+#@gui : Max y = float[6, -10000, 10000]
+#@gui : Axes = bool(0)
+#@gui : Grid = bool(0)
+#@gui : Grid Cell Size = int(1,1,5)
+#@gui : sep = separator()
+#@gui : url = link("Filter discussed here","http://gimpchat.com/viewtopic.php?f=28&t=21315")
+#@gui : note = note("<small>Author: <i>Claude Lion</i>. Latest Update: <i>2024/10/22</i>.</small>")
+cl_implicitEqua:
+	equ,w,h,minx,maxx,miny,maxy,axes,grid,gridSize=$"*"
+	xlong:=$maxx-$minx
+	ylong:=$maxy-$miny
+	xscale:=$w/$xlong
+	yscale:=$h/$ylong
+
+	foreach {
+		$w,$h,1,1,"
+			x=x/$xscale+$minx;
+			y=-y/$yscale-$miny;
+			$1"
+		+gradient_norm.
+		fill. "255 * cut( abs(i#-2), 0, i  ) / i"
+		rm..
+
+		if $axes==1
+			$w,$h,1,1,"X=x/$xscale+$minx;Y=-y/$yscale-$miny;X*Y"
+			+gradient_norm.
+			fill. "255 * cut( abs(i#-2), 0, i  ) / i"
+			rm..
+		else
+			$w,$h,1,1,255
+		fi
+
+		if $grid==1
+			$w,$h,1,1,"
+				X=x/$xscale+$minx;
+				Y=-y/$yscale-$miny;
+				sin(pi*X/$gridSize)*sin(pi*Y/$gridSize);"
+			+gradient_norm.
+			fill. "255 * cut( abs(i#-2), 0, i  ) / i"
+			rm..
+		else
+			$w,$h,1,1,255
+		fi
+
+		move[-1] -3
+		append. [-2],c
+		append. [-3],c
+		rm[-2,-3]
+		move[-1] 0
+
+	}
+
+#@gui Neon Carpet: cl_neonCarpet, cl_neonCarpet(0)
+#@gui : Sequence Number = ~int(0, 0, 200)
+#@gui : Item Number = ~int(0, 0, 100)
+#@gui : Invert = ~bool(0)
+#@gui : sep = separator()
+#@gui : note = note("Note: Some combinations of parameters give a completely black result")
+#@gui : note = note("<small>Author: <i>Claude Lion</i>. Latest Update: <i>2024/12/11</i>.</small>")
+#@gui : note = note["<small>It uses filters of David Tschumperlé and Andy Kelday (garagecoder)</small>"]
+
+cl_neonCarpet:
+   num1,num2,inv=$"*"
+
+   foreach {
+
+      remove_opacity.
+      fact2={11+2*$num2}
+      fact1={$fact2+$num1}
+
+      fill. "(x*x+y*y+128*c)%512%"$fact1"%"$fact2
+      n. 0,256
+      distance. 128,3
+      %. 32
+      n. 0,255
+      b. 1.1
+      ac "repeat 6 { bilateral 10,7 }",0 # copied from "fx_smooth_bilateral 10,7,6,0" of David Tschumperlé
+      cut. 0,100
+      n. 0,255
+      # copied from "gcd_despeckle 20,20" of Andy Kelday (garagecoder)
+      +label. 20,1 nb={1+iM}
+      +histogram. $nb,0,{$nb-1}
+      map.. . rm.
+      le. 20 *. 255
+      inpaint.. . rm.
+      # end of copy from garagecoder
+
+      if $inv==1
+         negate. n. 0,255
+      fi
+
+   }

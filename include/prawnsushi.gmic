@@ -1,0 +1,2201 @@
+#@gmic
+#
+#  File        : prawnsushi.gmic
+#                ( G'MIC commands file )
+#
+#  Description : Personal G'MIC filters done by 'prawnsushi'.
+#
+#  Copyright   : Prawnsushi
+#                ( http://prawnsushi.free.fr )
+#
+#  License     : CeCILL v2.0
+#                ( http://cecill.info/licences/Licence_CeCILL_V2-en.html )
+#
+#  This software is governed by the CeCILL  license under French law and
+#  abiding by the rules of distribution of free software.  You can  use,
+#  modify and/ or redistribute the software under the terms of the CeCILL
+#  license as circulated by CEA, CNRS and INRIA at the following URL
+#  "http://cecill.info".
+#
+#  As a counterpart to the access to the source code and  rights to copy,
+#  modify and redistribute granted by the license, users are provided only
+#  with a limited warranty  and the software's author,  the holder of the
+#  economic rights,  and the successive licensors  have only  limited
+#  liability.
+#
+#  In this respect, the user's attention is drawn to the risks associated
+#  with loading,  using,  modifying and/or developing or reproducing the
+#  software by the user in light of its specific status of free software,
+#  that may mean  that it is complicated to manipulate,  and  that  also
+#  therefore means  that it is reserved for developers  and  experienced
+#  professionals having in-depth computer knowledge. Users are therefore
+#  encouraged to load and test the software's suitability as regards their
+#  requirements in conditions enabling the security of their systems and/or
+#  data to be ensured and,  more generally, to use and operate it in the
+#  same conditions as regards security.
+#
+#  The fact that you are presently reading this means that you have had
+#  knowledge of the CeCILL license and that you accept its terms.
+#
+
+
+
+#@gui _<b>Rendering</b>
+#------------------------------------------------------------------------------------
+#@gui Underwoods : pr_underwoods, pr_underwoods_preview(1)*
+#@gui : Description = note{"<span color="#EE5500"><b>Description:</b></span> \
+# Generates a 2D forest scene, with trees, light and particles..
+#@gui : "}, sep = separator()
+#@gui : Reload current parameters = button(2)
+#@gui : Preview Scaling = int(30,1,100)
+#@gui : note = note("<small><i>Downscaling will make preview update faster.</i></small>")
+#@gui : sep = separator()
+#@gui : note = note("<span color="#EE5500"><small><b>Light:</b></small></span>")
+#@gui : Light Source Location = point(50,5,0,0,255,255,0,255,6)
+#@gui : Source Width = float(10,0,100)
+#@gui : Source Height = float(10,0,100)
+#@gui : Rays Max Opacity = float(0.7,0,1)
+#@gui : Color = color(208,208,156)
+#@gui : Blending =  choice(34,"Add","Alpha","And","Average","Blue","Burn","Darken","Difference","Divide","Dodge",\
+# "Edges","Exclusion","Freeze","Grainextract","Grainmerge","Green","Hardlight","Hardmix","Hue","Interpolation",\
+# "Lchlightness","Lighten","Lightness","Linearburn","Linearlight","Luminance","Multiply","Negation","Or","Overlay",\
+# "Pinlight","Red","Reflect","Saturation","Screen","Seamless","Seamless_mixed","Softburn","Softdodge","Softlight","Stamp","Subtract","Value","Vividlight",\
+# "Xor")
+#@gui : Particles = int(500,0,5000)
+#@gui : P. Max Opacity = float(1,0,1)
+#@gui : Color = color(255,255,255)
+#@gui : Rim Light Softness = float(0.4,0,2)
+#@gui : sep = separator()
+#@gui : note = note("<span color="#EE5500"><small><b>Trees:</b></small></span>")
+#@gui : Tree Shape Seed (0 : Random) = int(0,0,100000)
+#@gui : Tree Position Seed (0 : Random) = int(0,0,100000)
+#@gui : Complexity = int(10,5,20)
+#@gui : Deformity = float(4,0,50)
+#@gui : Deform Scale = float(2,0,10)
+#@gui : Max Height = float(0.4,-1,1)
+#@gui : Min Width = float(0,-1,0)
+#@gui : Amount = int(20,1,100)
+#@gui : Trunk Color = color(15,10,0)
+#@gui : Opacity = float(1,0,1)
+#@gui : Leaves Color = color(15,10,0)
+#@gui : Opacity = float(0.8,0,1)
+#@gui : sep = separator()
+#@gui : note = note("<span color="#EE5500"><small><b>Ambiance:</b></small></span>")
+#@gui : BG Top 1= color(100,0,0)
+#@gui : BG Top 2 = color(40,30,0)
+#@gui : BG Middle = color(40,20,0)
+#@gui : BG Bottom 1 = color(20,10,0)
+#@gui : BG Bottom 2 = color(0,0,0)
+#@gui : Opacity = float(0.2,0,1)
+#@gui : Blending =  choice(34,"Add","Alpha","And","Average","Blue","Burn","Darken","Difference","Divide","Dodge",\
+# "Edges","Exclusion","Freeze","Grainextract","Grainmerge","Green","Hardlight","Hardmix","Hue","Interpolation",\
+# "Lchlightness","Lighten","Lightness","Linearburn","Linearlight","Luminance","Multiply","Negation","Or","Overlay",\
+# "Pinlight","Red","Reflect","Saturation","Screen","Seamless","Seamless_mixed","Softburn","Softdodge","Softlight","Stamp","Subtract","Value","Vividlight",\
+# "Xor")
+#@gui : preview = bool(0)_0
+#@gui : sep = separator()
+#@gui : note = note("<small>Author: <i>Prawnsushi</i>.\
+# Latest Update: <i>2024/05/01</i>.</small>")
+
+pr_underwoods:
+  foreach {
+
+    rndB,preSca,rayX,rayY,rayW,rayH,rayO,rayR,rayG,rayB,rayBL,partiN,partiO,partiR,partiG,partiB,rimO,\
+    treeS,tposS,treeComp,treeD,treeDS,treeH,treeW,treeCount,trunR,trunG,trunB,trunO,leafR,leafG,leafB,leafO,\
+    bgtR,bgtG,bgtB,bgt2R,bgt2G,bgt2B,bgmR,bgmG,bgmB,\
+    bgbR,bgbG,bgbB,bgb2R,bgb2G,bgb2B,bgO,bgBL,prev=$*
+
+    W,H:=w,h
+    rm
+    trunO,leafO*=100
+
+    list_of_blending_modes=add,alpha,and,average,blue,burn,darken,difference,divide,dodge,edges,exclusion,freeze,grainextract,grainmerge,green,hardlight,hardmix,hue,interpolation,lchlightness,lighten,lightness,linearburn,linearlight,luminance,multiply,negation,or,overlay,pinlight,red,reflect,saturation,screen,seamless,seamless_mixed,softburn,softdodge,softlight,stamp,subtract,value,vividlight,xor
+    rayBL=${"arg0 $rayBL,"$list_of_blending_modes}
+    bgBL=${"arg0 $bgBL,"$list_of_blending_modes}
+
+    ($bgtR;$bgt2R;$bgmR;$bgbR;$bgb2R\
+    ^$bgtG;$bgt2G;$bgmG;$bgbG;$bgb2G\
+    ^$bgtB;$bgt2B;$bgmB;$bgbB;$bgb2B)
+    => BG
+    r $W,$H,[BG],[BG],1
+    if $rayW&&$rayH ellipse $rayX%,$rayY%,$rayW%,$rayH%,0,$rayO,$rayR,$rayG,$rayB fi
+    pr_deform 100,0,2,0,1,3 b 5%
+    +plasma , spread. 5
+    blend value,.25
+    n 0,255
+    R:=round($treeCount/2)
+    offm:=$W/$treeCount
+    offM:=$offm*2
+    if $prev&&$preSca<100 rs $preSca% treeD,partiN*=2*($preSca/100) fi
+    .
+    repeat $R {
+      T:=$>+2
+        repeat 2 {
+          if $treeS treeS+=$T+$> srand $treeS else srand fi
+          _fx_tree $treeComp,0,{u($treeW)},{u($treeH)},10,200,0,2,.8,-10,10,50,75,0,70,20,\
+          $trunR,$trunG,$trunB,255,$trunO,$leafR,$leafG,$leafB,255,$leafO,.4,.4
+          }
+        =>.. Tree$T
+        =>. Tree1$T
+        l[Tree$T,Tree1$T] {
+          if $tposS tposS+=$T srand $tposS else srand fi
+          shift[Tree$T] {$T*u($offm,$offM)}%,0,0,0,2,0
+          shift[Tree1$T] {-$T*u($offm,$offM)}%,0,0,0,2,0
+          if $T>=$treeCount*.2
+            if $prevSca<100 int=.1,.2 else int=.8,.1 fi
+            light_relief {u($int)},.5,.5,{u(.04,.08)},$rimO,$rayX%,$rayY%,.0001,2,0
+          fi
+          blend alpha,1
+          if $treeD pr_deform $treeD,0,$treeDS,1,1,3 fi
+        }
+        mv[Tree$T] 0
+        ja. [Tree$T],0,0~,0,0,1
+        rm[Tree$T]
+        srand
+        if $bgO
+          if $>%3==1||$>==$R-1
+            [BG] blend[-1,-2] $bgBL,$bgO
+          fi
+        fi
+        if $rayO
+          if $prev den:=10  else den=5 fi
+          if $>==0||$>%2==1||$>==$R-1
+           +lightrays. $den,{$rayX+u(1)}%,{$rayY+u(1,2)}%,1,255
+            if $partiN&&$partiO
+              repeat $partiN {
+               ellipse. {u(100)}%,{u(100)}%,{u(.1)}%,{u(.1)}%,{u(180)},{u($partiO)},$partiR,$partiG,$partiB
+              }
+              b. .1%
+              to_rgba. s. c rm. . a[-4--1] c
+            fi
+            .,.,1,3,[$rayR,$rayG,$rayB] blend[-1,-2] overlay,1
+            blend[-2,-1] $rayBL,{u(.2,$rayO)}
+          fi
+        fi
+  }
+  keep.
+  n 0,255
+}
+
+pr_underwoods_preview:
+  pr_underwoods ${1--2},1
+
+
+#@gui _<b>Degradations</b>
+#-------------------------
+
+#@gui Sloppy Mess : pr_sloppymess, pr_sloppymess_preview(0)
+#@gui : Description = note{"<span color="#EE5500"><b>Description:</b></span> \
+# Slices the image then rotates and mirror each slice.
+#@gui : "}, sep = separator()
+#@gui : note = note("<span color="#EE5500"><small><b>Slices:</b></small></span>")
+#@gui : Angle = ~int(0,0,360)
+#@gui : Width (px) = int(1,1,1000)
+#@gui : Axis = ~choice("X-Axis","Y-Axis")
+#@gui : Mirror Axis = ~choice("X-Axis","Y-Axis")
+#@gui : Mirror Selection Interval (0:Off, -1:Random) = ~int(-1,-1,50)
+#@gui : Invert Mirror Selection = ~bool(0,0,1)
+#@gui : sep = separator()
+#@gui : note = note("<span color="#EE5500"><small><b>Rotation:</b></small></span>")
+#@gui : Apply to channels = ~bool(0)
+#@gui : Range Clockwise = ~int(35,0,90)
+#@gui : Range Counter-Clockwise = ~int(-35,-90,0)
+#@gui : Boundary Conditions = ~int(2,0,3)
+#@gui : Center X(%) = ~int(0,0,100)
+#@gui : Center Y(%) = ~int(0,0,100)
+#@gui : sep = separator()
+#@gui : Apply to channels = ~bool(0)
+#@gui : Deform = ~int(2,0,20)
+#@gui : Scale = ~float(2,0.1,20)
+#@gui : sep = separator()
+#@gui : Iterations = int(1,1,20)
+#@gui : Blending =  ~choice(3,"Add","Alpha","And","Average","Blue","Burn","Darken","Difference","Divide","Dodge",\
+# "Edges","Exclusion","Freeze","Grainextract","Grainmerge","Green","Hardlight","Hardmix","Hue","Interpolation",\
+# "Lchlightness","Lighten","Lightness","Linearburn","Linearlight","Luminance","Multiply","Negation","Or","Overlay",\
+# "Pinlight","Red","Reflect","Saturation","Screen","Seamless","Seamless_mixed","Softburn","Softdodge","Softlight","Stamp","Subtract","Value","Vividlight",\
+# "Xor")
+#@gui : Strength = ~float(100,0,100)
+#@gui : sep = separator()
+#@gui : note = note("<small>Author: <i>Prawnsushi</i>.      \
+# Latest Update: <i>2024/07/07</i>.</small>")
+
+pr_sloppymess :
+ang,wid,ax,_mir,inter,inv,chan,_rang_f,_rang_b,_bound,_cx,_cy,defchan,def,sca,it,bl,str=$*
+arg0 $bl,\
+      "add","alpha","and","average","blue","burn","darken","difference","divide","dodge","edges","exclusion","freeze",\
+      "grainextract","grainmerge","green","hardlight","hardmix","hue","interpolation","lchlightness","lighten",\
+      "lightness","linearburn","linearlight","luminance","multiply","negation","or","overlay","pinlight","red",\
+      "reflect","saturation","screen","seamless","seamless_mixed","softburn","softdodge","softlight","stamp","subtract","value","vividlight","xor"
+blending_mode=${}
+
+foreach {
+  n 0,255
+  wi,he:=w,h
+  if $ang>0&&$ang!=360 rotate $ang,0,3 fi
+  if $ax==0 spins,dir,sli={round(w/$wid)},x,y else spins,dir,sli={round(h/$wid)},y,x fi
+  if $_mir==0 _mir=x else _mir=y fi
+  repeat $it {
+    +s. $dir,$spins
+    if $_rang_f||$_rang_b
+      if $chan
+        apc[^0] "rotate {u($_rang_f,$_rang_b)},0,$_bound,$_cx%,$_cy%"
+      else
+        repeat $spins { rotate[{$>+1}] {u($_rang_f,$_rang_b)},0,$_bound,$_cx%,$_cy% }
+      fi
+    fi
+    l[^0] {
+      sel=0--1
+      if $inv==1 sel..=^ fi  # Negate selection
+      if $inter>1
+        ap[$sel:$inter] "mirror $_mir"
+      elif $inter==-1
+        step:=floor(u(1,20))
+        ap[$sel:$step] "mirror $_mir"
+      fi
+    }
+    a[^0] $dir
+    +gradient_norm.
+    negate.
+    if $def
+      if $defchan
+        s[1] c pr_deform[^0] $def,0,$sca a[^0,-1] c
+      else
+        pr_deform[^0] $def,0,$sca
+      fi
+    fi
+    blend[^0] edges,0.6
+    blend $blending_mode,$str%
+  }
+
+  if $ang>0&&$ang!=360
+    rotate. -$ang,0,3
+    vx,vy:=floor((w-$wi)/2),floor((h-$he)/2)
+    vxb,vyb:=$vx+$wi-1,$vy+$he-1
+    crop. $vx,$vy,$vxb,$vyb
+  fi
+  equalize
+  n 0,255
+}
+
+pr_sloppymess_preview :
+  pr_sloppymess $*
+
+
+#@gui _<b>Testing</b>
+#@gui <i>Prawnsushi</i>
+#-------------------------
+
+#@gui Uglify : uglify, uglify_preview(0)
+#@gui : Description = note{"<span color="#EE5500"><b>Description:</b></span> \
+# My first script! Tries to simulate watercolors - experimental.
+#@gui : "}, sep = separator()
+#@gui : Write settings on picture = bool(0,0,1)
+#@gui : note = note{"<small>Use original input image resolution or choose processing resolution (i.e. Half res + Upscale 2x). Beware: Preview lies.</small>"}
+#@gui : Original Resolution = bool(1,0,1)
+#@gui : Processing Resolution = int(1000,500,5000)
+#@gui : Upscale 2x (Iterations) = _int(0,0,5)
+#@gui : sep = separator()
+#@gui : - Presets = choice(0,"Default","1 - From Scratch","2 - Soft","3 - Cracked","4 - Black","5 - Faded Black","6 - Nuudlz for a blank page")
+#@gui : sep = separator()
+#@gui : Pre-Process = ~bool(0,0,1)
+#@gui : - Sharpening = ~int(0,0,500)
+#@gui : - Blur = ~float(0,0,10)
+#@gui : - Local normalization = ~float(0,0,3)
+#@gui : sep = separator()
+#@gui : Sloppiness = ~bool(1,0,1)
+#@gui : - Distort = ~float(3,0,20)
+#@gui : - Blur = ~float(3,0,50)
+#@gui : - Blend Mode = ~choice(13,"add","and","average","blue","burn","darken","difference","divide","dodge","exclusion","grainextract","grainmerge","green","hardlight","hardmix","hue","interpolation","lighten","lightness","linearburn","linearlight","luminance","multiply","negation","or","overlay","pinlight","red","reflect","saturation","screen","shapeaverage","softburn","softdodge","softlight","stamp","subtract","value","vividlight","xor")
+#@gui : - Strength = ~float(0.5,0.0,1.0)
+#@gui : sep = separator()
+#@gui : Watering = ~bool(1,0,1)
+#@gui : - Smoothing = ~int(12,0,40)
+#@gui : - Iterations = ~int(1,0,10)
+#@gui : Fuzzy Frame Size (%) = ~float(5,0,45)
+#@gui : - Frame Blur = ~int(20,0,150)
+#@gui : - Frame Strentgh = ~float(0.5,0,1)
+#@gui : Plasma Seed ( -1 : Random ) = ~int{-1,-1,999999}
+#@gui : - Plasma Saturation = ~int(-100,-100,100)
+#@gui : - Plasma Blur = ~float(0,0,50)
+#@gui : - Blend Mode = ~choice(7,"add","and","average","blue","burn","darken","difference","divide","dodge","exclusion","grainextract","grainmerge","green","hardlight","hardmix","hue","interpolation","lighten","lightness","linearburn","linearlight","luminance","multiply","negation","or","overlay","pinlight","red","reflect","saturation",screen","shapeaverage","softburn","softdodge","softlight","stamp","subtract","value","vividlight","xor")
+#@gui : - Plasma Strength = ~float(0.6,0,1)
+#@gui : sep = separator()
+#@gui : Cracks = ~bool(1,0,1)
+#@gui : Sharpening = ~int(150,0,500)
+#@gui : - Shock Filter = ~int(1,0,1)
+#@gui : Light Relief (0 means all off) = ~float(0.05,0,1)
+#@gui : - Light2 = ~float(0.02,0,1)
+#@gui : - Light3 = ~float(0.02,0,1)
+#@gui : sep = separator()
+#@gui : Sketch = ~bool(1,0,1)
+#@gui : - Likeness = ~int(25,0,30)
+#@gui : - Contrast = ~int(0,-100,100)
+#@gui : - Gamma = ~int(0,-100,100)
+#@gui : - Thickness = ~int(2,0,40)
+#@gui : - Sketch strength = ~float(1,0,1)
+#@gui : --- Messy lines = ~float(0.8,0,1)
+#@gui : - White lines = ~float (0.6,0,1)
+#@gui : --- W. L. Deform = ~float (1.6,0,40)
+#@gui : - Blend Mode = ~choice(22,"add","and","average","blue","burn","darken","difference","divide","dodge","exclusion","grainextract","grainmerge","green","hardlight","hardmix","hue","interpolation","lighten","lightness","linearburn","linearlight","luminance","multiply","negation","or","overlay","pinlight","red","reflect","saturation",screen","shapeaverage","softburn","softdodge","softlight","stamp","subtract","value","vividlight","xor")
+#@gui : note = note("<small>Setting Sktech Strength to 0 disables Messy lines too.\n Messy lines uses 'Breaks' by David Tschumperlé.</small>")
+#@gui : sep = separator()
+#@gui : Noise = ~float(3,0,6)
+#@gui : Canvas = ~float(0.3,0,1)
+#@gui : Canvas density = ~int(0,0,30)
+#@gui : Color = ~color(255,255,255,255)
+#@gui : sep = separator()
+#@gui : Post-Process = ~bool(1,0,1)
+#@gui : Emboss = ~float(1.5,0,5)
+#@gui : Mix Original Hue/Sat = ~float(0.5,0,1)
+#@gui : Brightness = ~float(0,-100,100)
+#@gui : Contrast = ~float(0,-100,100)
+#@gui : Gamma = ~float(0,-100,100)
+#@gui : Hue = ~float(0,-100,100)
+#@gui : Saturation = ~float(0,-100,100)
+#@gui : sep = separator()
+#@gui : - Old Presets = _choice(0,"Default","1 - From Scratch","2 -Soft","3 - Cracked","4 - Black","5 - Faded Black","6 - Nuudlz for blank page")_0
+#@gui : sep = separator()
+#@gui : note = note("<small>Author: <i>Prawnsushi</i>.      \
+# Latest Update: <i>2023/08/17</i>.</small>")
+
+uglify :
+com,origres,procres,dccires,preset,bst,bstsharp,bstblur,locnorm,\
+filt,dist,distblur,distmerge,diststr,wc,bilsize,bilrep,fuzz,fuzzblur,\
+fuzstr,plsmseed,plsmsat,plsmblur,plasmerge,plastr,cracks,sckrad,sck,lgtone,\
+lgttwo,lgthree,sketch,sklike,cutmin,cutmax,linthick,linestr,brkstr,wl,wldef,skmerge,\
+noistr,cnvs,cvmod,cvr,cvg,cvb,cva,post,emboss,huestr,\
+bri,con,gam,hue,sat=${1-56}
+
+arg0 $distmerge,\
+    "add","and","average","blue","burn","darken","difference","divide","dodge","exclusion","grainextract","grainmerge",\
+    "green","hardlight","hardmix","hue","interpolation","lighten","lightness","linearburn","linearlight","luminance","multiply",\
+    "negation","or","overlay","pinlight","red","reflect","saturation","screen","shapeaverage","softburn","softdodge","softlight",\
+    "stamp","subtract","value","vividlight","xor"
+distmerge=${}
+
+arg0 $plasmerge,\
+    "add","and","average","blue","burn","darken","difference","divide","dodge","exclusion","grainextract","grainmerge",\
+    "green","hardlight","hardmix","hue","interpolation","lighten","lightness","linearburn","linearlight","luminance","multiply",\
+    "negation","or","overlay","pinlight","red","reflect","saturation","screen","shapeaverage","softburn","softdodge","softlight",\
+    "stamp","subtract","value","vividlight","xor"
+plasmerge=${}
+
+arg0 $skmerge,\
+    "add","and","average","blue","burn","darken","difference","divide","dodge","exclusion","grainextract","grainmerge",\
+    "green","hardlight","hardmix","hue","interpolation","lighten","lightness","linearburn","linearlight","luminance","multiply",\
+    "negation","or","overlay","pinlight","red","reflect","saturation","screen","shapeaverage","softburn","softdodge","softlight",\
+    "stamp","subtract","value","vividlight","xor"
+skmerge=${}
+
+foreach {
+  to_rgba
+  nm[0] ORIG
+  __ORIGW={0,w}
+  __ORIGH={0,h}
+  if !$origres res=$procres,$procres rs[ORIG] $res,6 fi
+  n 0,255
+
+  if $bst
+    if $bstblur b $bstblur fi
+    if $bstsharp sharpen $bstsharp fi
+    if $locnorm normalize_local $locnorm,$locnorm fi
+  fi
+
+  [ORIG] nm. REND
+
+  if $filt
+    if $diststr
+      [ORIG] nm. FILT
+      l[REND,FILT] {
+        usrmod=$dist,$distblur
+        if [$usrmod]!=[0,0]
+          if $dist apc. "pr_deform $dist" fi
+          if $distblur b. $distblur fi
+          blend[REND,FILT] $distmerge,$diststr
+          n[REND] 0,255
+        fi
+      }
+    fi
+  fi
+
+  if $wc
+    if $plastr
+      [ORIG] nm. PLAS
+      l[PLAS] {
+        if $plsmseed>-1 srand $plsmseed fi
+        plasma 1,2,5
+        if $plsmsat!=0 adjust_colors 0,0,0,0,$plsmsat fi
+        if $plsmblur>0 b $plsmblur fi
+      }
+      blend[REND,PLAS] $plasmerge,$plastr
+    fi
+
+    if $fuzz
+      [ORIG] nm. FUZZ
+      l[FUZZ] {
+        fc 255,255,255
+        rectangle $fuzz%,$fuzz%,{100-$fuzz}%,{100-$fuzz}%,1,0
+        if $fuzzblur b $fuzzblur,0 fi
+        repeat 10 {
+          pr_deform $fuzz
+          spread {[$fuzz/2,$fuzz/2]}
+        }
+        if $fuzstr!=1 mul $fuzstr fi
+      }
+      blend_median[REND,FUZZ]  fi
+  fi
+
+  local[REND]
+    if $cracks
+      if $sckrad  pr_deform 1.5 sharpen $sckrad,$sck dilate_oct 1.5 sharpen $sckrad,$sck fi
+      if $lgtone
+        repeat 3 {
+          fx_light_relief $lgtone,$lgttwo,$lgthree,0,0.2,50,50,20,0.084,0,0
+          b 2 erode_oct 3 sharpen $sckrad
+        }
+      fi
+    fi
+
+    if $wc
+      if $bilrep>0
+        repeat $bilrep {
+          pr_deform {0,w/1000} bilateral $bilsize,$bilsize,$bilsize,$bilsize
+        }
+      fi
+    fi
+  done
+
+  if $post
+    if $huestr
+      [ORIG] nm. HUE
+      [ORIG] nm. SAT
+      b[HUE,SAT] 5
+      blend[HUE,REND] hue,$huestr
+      blend[SAT,REND] saturation,$huestr
+    fi
+  fi
+
+  if $sketch
+    if $linestr>0
+      [ORIG] nm. LINE
+      l[LINE] {
+        if $__ORIGW/2>1500 r 50%,50%,100%,100%,6 fi
+        pr_deform {0,w/2000} rolling_guidance {31-$sklike},20,0
+        if $__ORIGW/2>1500 r 200%,200%,100%,100%,6 fi
+        gradient_norm negate
+        if $brkstr>0
+          . repeat 2 fx_breaks. 1,5,20,0,3  done
+          blend[-1,-2,LINE] multiply,$brkstr
+        fi
+        if $linthick
+          erode_circ. {$linthick/2}
+          spread. {$linthick/10}
+          dilate_circ. {$linthick/10}
+          b. {$linthick/5}
+          if $linthick/5>=3 sharpen. {$linthck*100} else sharpen. 100 fi
+        fi
+      adjust_colors. ,$cutmin,$cutmax,, n. 0,255 spread. 0.5
+      +store. line
+      }
+      split[REND] c a[1,2,3] c
+      blend[LINE,REND] $skmerge,$linestr
+    if $wl>0
+      $line negate. erode_circ. {$linthick/2}
+      if $wldef pr_deform. $wldef fi
+      . blend[REND,LINE] or,$wl blend[-1,-2] add,1
+    fi
+    a[REND] [-1],c
+    fi
+  fi
+
+  n[REND] 0,255
+  keep[REND]
+
+  if $post
+    usrmod=$bri,$con,$gam,$hue,$sat
+    if [$usrmod]!=[0,0,0,0,0] adjust_colors[REND] $bri,$con,$gam,$hue,$sat fi
+  fi
+
+  if $dccires repeat $dccires { r 200%,200%,100%,100%,6 } fi
+  if $noistr fx_noise $noistr,0,11,1,0,50,50 fi
+  if $cnvs pr_canvas[REND] $cnvs,$cvmod,1,$cvr,$cvg,$cvb,$cva fi
+
+  if $post
+    if $emboss rep_emboss_relief 5,0,0.5,$emboss,1,0,1 fi
+  fi
+
+  if $com
+    expand y,35,0
+    shift 0,35
+    text "${1--1}",10,30,12,1,255
+    text $distmerge" "$plasmerge" "$skmerge,10,50,20,1,255
+  fi
+}
+
+uglify_preview :
+  __output=${1--2}
+  preset,old_preset={[$5,${-1}]}
+
+  if $preset==1
+    variables=0,1,1000,0,1,0,0,0,0,0,0,0,13,0,0,0,0,0,0,0,-1,-100,0,23,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,22,0,0,0,255,255,255,255,0,0,0,0,0,0,0,0
+  elif $preset==2
+    variables=0,1,1000,0,2,1,0,2,0,1,20,10,7,0.4,1,12,2,127,42,0.365,-1,0,0,11,0.5,1,1,0,0.01,0.02,0.02,1,30,0,0,5,1,0,1,4,22,6,0,0,255,255,255,255,1,0,0.8,0,0,9,0,0
+  elif $preset==3
+    variables=0,1,1000,0,3,0,0,0,0.3,1,3,3,13,0.5,1,12,1,0,20,0.5,-1,-100,0,37,0.755,1,500,1,0.027,0.02,0.02,1,25,0,0,2,1,0.9,1,4,22,6,0.3,0,255,255,255,255,1,1.5,1,0,0,31,0,0
+  elif $preset==4
+    variables=0,1,1000,0,0,1,500,0,0.366,0,3,3,13,0.5,1,10,0,0,0,0.5,-1,80,0,7,0.2,1,0,1,0.134,0.02,0.02,1,29,0,0,0,0.707,0,1,1.6,19,6,0.61,11,255,255,255,255,1,1.1,0,0,0,0,0,-100
+  elif $preset==5
+    variables=0,1,1000,0,0,1,308,0,2.3736,1,3,3,0,0.5,1,23,2,350,1,0.5,-1,100,0,10,1,1,0,1,0.2,0.02,0.02,1,29,0,0,2,0.9,1,1,1.6,22,6,1,19,134,110,71,255,1,1,0,0,0,13.4,0,-100
+  elif $preset==6
+    variables=0,1,1000,0,0,0,0,0,0.3,0,3,3,13,0.5,1,12,0,0,20,0.5,437767,-100,19.75,37,1,1,500,0,0.021,0.02,0.02,1,20,0,0,4,1,1,1,4,13,0,0,16,125,125,125,255,1,0.965,1,0,-47.6,0,0,0
+  fi
+
+  if $preset
+    if $preset==$old_preset
+      if [$__output]!=[$variables]
+        __output=${1-4},0,${6--2}
+      fi
+  else
+    __output=$variables
+    fi
+  fi
+
+  com,origres,procres,dccires,preset,bst,bstsharp,bstblur,locnorm,\
+  filt,dist,distblur,distmerge,diststr,wc,bilsize,bilrep,fuzz,fuzzblur,\
+  fuzstr,plsmseed,plsmsat,plsmblur,plasmerge,plastr,cracks,sckrad,sck,lgtone,\
+  lgttwo,lgthree,sketch,sklike,cutmin,cutmax,linthick,linestr,brkstr,wl,wldef,skmerge,\
+  noistr,cnvs,cvmod,cvr,cvg,cvb,cva,post,emboss,huestr,\
+  bri,con,gam,hue,sat=$__output
+
+  uglify $__output
+
+  u "{"$com"}""{"$origres"}""{"$procres"}""{"$dccires"}""{"$preset"}""{"$bst"}""{"$bstsharp"}""{"$bstblur"}""{"$locnorm"}"\
+  "{"$filt"}""{"$dist"}""{"$distblur"}""{"$distmerge"}""{"$diststr"}""{"$wc"}""{"$bilsize"}""{"$bilrep"}""{"$fuzz"}""{"$fuzzblur"}"\
+  "{"$fuzstr"}""{"$plsmseed"}""{"$plsmsat"}""{"$plsmblur"}""{"$plasmerge"}""{"$plastr"}""{"$cracks"}""{"$sckrad"}""{"$sck"}""{"$lgtone"}"\
+  "{"$lgttwo"}""{"$lgthree"}""{"$sketch"}""{"$sklike"}""{"$cutmin"}""{"$cutmax"}""{"$linthick"}""{"$linestr"}""{"$brkstr"}""{"$wl"}""{"$wldef"}""{"$skmerge"}"\
+  "{"$noistr"}""{"$cnvs"}""{"$cvmod"}""{"$cvr,$cvg,$cvb,$cva"}""{"$post"}""{"$emboss"}""{"$huestr"}"\
+  "{"$bri"}""{"$con"}""{"$gam"}""{"$hue"}""{"$sat"}""{"$preset"}"
+
+
+#@gui Slice Stretch-Squeeze :pr_streeze, pr_streeze_preview(1)+
+#@gui : Description = note{"<span color="#EE5500"><b>Description:</b></span> \
+# Slices the image and stretches the different parts.
+#@gui : "}, sep = separator()
+#@gui : Iterations = ~int(10,1,100)
+#@gui : note = note("<small>Do not set this higher than the smallest side of the image:</small>")
+#@gui : Slices = int(101,5,1001)
+#@gui : note = note("<small>If there is a seam in the image try adding or removing Slices. Odd numbers seem to work better. </small>")
+#@gui : sep = separator()
+#@gui : note = note("<span color="#EE5500"><small><b>Resizing:</b></small></span>")
+#@gui : Outer Range A (Starting @0%) = ~int(20,0,100)
+#@gui : Outer Range B (Ending @100%) = ~int(80,0,100)
+#@gui : O.R. Factor (%) = ~int(80,1,200)
+#@gui : Inner Selection A (Starting %) = ~int(20,0,100)
+#@gui : Inner Selection B (Ending %) = ~int(80,0,100)
+#@gui : I.S. Factor (%) = ~int(120,1,200)
+#@gui : Axis = ~choice(0,"X","Y","XY")
+#@gui : Interpolation = choice(2,"Nearest","Average","Linear","Grid","Bicubic","Lanczos" )
+#@gui : Show Steps = bool(0,0,1)
+#@gui : Delay (ms) = int(25,1,1000)
+#@gui : sep = separator()
+#@gui : note = note("<small>Author: <i>Prawnsushi</i>.\
+# Latest Update: <i>2023/08/17</i>.</small>")
+
+pr_streeze : skip "${1=10},${2=20},${3=20},${4=80},${5=80},${6=20},${7=80},${8=120},${9=0},${10=2},${11=0},${12=1}"
+  foreach {
+    vx,vy:=w,h
+    if $9==0||$9==2 axis,rx,ry,rxb,ryb=x,$5,100,$8,100 fi
+    if $9==1 axis,rx,ry,rxb,ryb=y,100,$5,100,$8 fi
+    repeat 2 {
+      repeat $1 {
+        s $axis,$2
+          l[0%-$3%,$4%-100%] { r $rx%,$ry%,100%,100%,{$10+1},1 }
+          l[$6%-$7%] { r $rxb%,$ryb%,100%,100%,{$10+1},1 }
+        a $axis r $vx,$vy,100%,100%,{$10+1},1
+        if $11 w wait $12 fi
+      }
+      if $9==2 axis,rx,ry,rxb,ryb=y,100,$5,100,$8 else break fi
+    }
+  }
+
+pr_streeze_preview :
+  pr_streeze $*
+
+
+#@gui Line Spam : pr_linespam, pr_linespam_preview(1)*
+#@gui : Description = note{"<span color="#EE5500"><b>Description:</b></span> \
+# Draws a flurry of lines on the image.
+#@gui : "}, sep = separator()
+#@gui : Iterations = ~int(30,1,100)
+#@gui : Line Base Thickness = ~float(3,0.01,50)
+#@gui : Thickness Scaling = ~float(1.02,0.01,1.2)
+#@gui : Line Opacity = ~float(0.8,0,1)
+#@gui : Start X = ~float(-1,-100,100)
+#@gui : Start Y = ~float(10,-100,100)
+#@gui : End X = ~float(101,0,200)
+#@gui : End Y = ~float(100,0,200)
+#@gui : Deform = ~float(0,0,20)
+#@gui : Style = ~choice(0,"A","B","C","D")
+#@gui : Base Color = ~color(255,85,0,255)
+#@gui : Color Variation = ~float(0,-15,15)
+#@gui : Randomize Colors = ~bool(0,0,1)
+#@gui : sep = separator()
+#@gui : Antialiasing = bool(0,0,1)
+#@gui : Amplitude = int(5,0,100)
+#@gui : Edge Threshold (%) = int(10,0,100)
+#@gui : Smoothness = float(0.8,0,5)
+#@gui : sep = separator()
+#@gui : Spam! = ~int(1,1,10)
+#@gui : Transparent Background = ~bool(0,0,1)
+#@gui : note = note("<small>Author: <i>Prawnsushi</i>.\
+# Latest Update: <i>2023/08/17</i>.</small>")
+
+pr_linespam : skip "${1=30},${2=3},${3=1.02},${4=0.8},${5=-1},${6=10},${7=101},${8=100},${9=0},${10=0},${11=255,85,0,255},${12=0},${13=0},${14=0},${15=5},${16=10},${17=0.8},${18=1},${19=0}"
+  foreach {
+    if ${-1} to_rgba fc 0,0,0,0 else [0] to_rgba. fc. 0,0,0,0 fi
+      l. {
+        bthick=$2
+        repeat 4 {
+          repeat $-2 {
+            iter,thick,tscale,opac,sx,sy,ex,ey,def,style,colr,colg,colb,cola,cvar,rcol,aa,amp,edg,smoo,spam=${1--2}
+            c={$>+1}
+            repeat $iter {
+              if $rcol==1
+                col:={[v($colr-50,$colr+50),v($colg-50,$colg+50),v($colb-50,$colb+50)]},255
+              else
+                col=$colr,$colg,$colb,255
+              fi
+              if $style==0 A,B=$>,$< elif $style==1 A,B:=[$<,$>]*[2,.5] elif $style==2 A,B=$< else A,B:=$>/2 fi
+              thickline. {$sx*$c+$bthick}%,{$A*$sy}%,{$B+$ex}%,{$ey-$A*$B}%,$thick,$opac,$col
+              thick*=$tscale
+              if inrange($colr+$cvar,0,255,0,0) colr+=$cvar fi
+              if inrange($colg+$cvar,0,255,0,0) colg+=$cvar fi
+              if inrange($colb+$cvar,0,255,0,0) colb+=$cvar fi
+            }
+          }
+          if $def pr_deform $def fi
+          rotate. 90,0,0
+        }
+        if $aa fx_smooth_antialias $amp,$edg,$smoo fi
+        n 0,255
+      }
+      if $!>1 blend alpha,1 fi
+  }
+pr_linespam_preview :
+  pr_linespam $*
+
+
+#@gui Channel Shuffle : pr_chanshuff, pr_chanshuff_preview(1)*
+#@gui : Description = note{"<span color="#EE5500"><b>Description:</b></span> \
+# Slices and shuffles the channels of the image.
+#@gui : "}, sep = separator()
+#@gui : Slices (0:Random) = int(0,0,1000)
+#@gui : Angle = ~int(0,0,360)
+#@gui : Axis = ~choice(0,"X","Y")
+#@gui : Sorting = ~choice(1,"Reverse","Shuffle","Minimum Value X","Minimum Value Y",\
+#"Minimum Value Z","Minimum Value C","Maximum Value X","Maximum Value Y",\
+#"Maximum Value Z","Maximum Value C","Red","Green","Blue","Alpha",\
+#"Minimum Deviation","Maximum Deviation","Average Deviation","Variance Deviation",\
+#"Standard Deviation","Sum Value","Product Value","Median Value",\
+#"L2-Norm","Width","Height","Depth")
+#@gui : Ordering = ~choice(0,"Positive","Negative")
+#@gui : note = note("<small>Author: <i>Prawnsushi, <a href="https://tschumperle.users.greyc.fr/">David Tschumperlé</a></i>.\
+# Latest Update: <i>2023/08/17</i>.</small>")
+
+pr_chanshuff : skip "${1=100},${2=0},${3=0},${4=1},${5=0},${6=10},${7=101},${8=100},${9=0},${10=0}"
+  foreach {
+    fac=$1
+    arg0 $3,"x","y" axis=${}
+    arg0 $4,\
+        "rv","u","xm","ym","zm","cm","xM","yM","zM","cM","R","G","B","A",\
+        "im","iM","ia","iv","id","is","ip","ic","in","w","h","z"
+    sort=${}
+    arg0 $5,"+","-" order=${}
+    wi,he:=w,h
+
+    if $3
+      if $1>$he fac=$he fi sli={0,floor(h/$fac)}
+    else
+      if $1>$wi fac=$wi fi sli={0,floor(w/$fac)}
+    fi
+    if $2>0&&$2!=360 rotate $2,0,0 fi
+    +s c
+    cc:=$!-1
+    if $1
+      s[^0] $axis,$sli
+    if $4>0 sort_list[^0] $order,$sort else rv[^0] fi
+      repeat $cc { a[{$>+1}-{$sli+$>}] $axis }
+    else
+      N:=v(1,50)
+      repeat $cc { l[{$>+1}] {
+      pr_rnd_split $N,$3
+        if $4>0 sort_list[^0] $order,$sort else rv[^0] fi
+        a $axis
+        }
+      }
+    fi
+    a[^0] c keep.
+    if $2>0&&$2!=360
+      rotate. -$2,0,0
+      vx,vy:=floor([w-$wi,h-$he]*0.5)
+      # vx,vy:=floor([(w-$wi)*0.5,(h-$he)*0.5])
+      vxb,vyb:=$vx+$wi-1,$vy+$he-1
+      crop. $vx,$vy,$vxb,$vyb
+    fi
+  }
+
+  pr_chanshuff_preview :
+  pr_chanshuff $*
+
+
+pr_rnd_split : skip "${1=10},${2=0}"
+  # By David Tschumperlé
+  foreach {
+    N=$1
+    l. {
+    if $2 D=h  else D=w fi
+      {$N+1},1,1,1,>u+j(-1) n. 0,{-2,$D} round. discard.
+      repeat h-1 {
+        param=1,[i[$>],i[$>+1]-1]
+        if $2 +rows[0] {$param} else +columns[0] {$param} fi
+      }
+      rm[0,1]
+    }
+  }
+
+
+#@gui Prawn Canvas : pr_canvas, pr_canvas_preview(0)
+#@gui : Description = note{"<span color="#EE5500"><b>Description:</b></span> \
+# Renders a canvas texture over the image.
+#@gui : "}, sep = separator()
+#@gui : Strength = ~float(0.3,0,1)
+#@gui : Details = ~float(0,0,30)
+#@gui : Colored = ~bool(0,0,1)
+#@gui : Color = ~color(255,255,255,255)
+#@gui : note = note("<small>Author: <i>Prawnsushi</i>.\
+# Latest Update: <i>2023/08/17</i>.</small>")
+pr_canvas : skip "${1=1},${2=0.5},${3=0},${4=255},${5=255},${6=255},${7=255}"
+  foreach {
+    nm REND
+    to_a
+    +fc 255,255,255 noise. 50,2 to_gray. . .
+    if $2
+      __wat,__watb=water.,water..
+      __watv=$2,1,45
+    else
+      __wat,__watb,__watv=b.,b..,0
+    fi
+    blur. x,30  $__wat $__watv  sharpen. 50  spread. 1.7
+    blur.. y,30  $__watb $__watv sharpen.. 50 spread.. 1.7
+    # parallel " blur. x,30  $__wat $__watv  sharpen. 50  spread. 1.7 "," blur.. y,30  $__watb $__watv sharpen.. 50 spread.. 1.7  "
+    *. .. keep[0,-1] +n. 0,255 +gradient. xy,1 -a[-2,-1] c *. {$1/100}
+    if $3
+      warp[REND] .,3,1,3,1
+      +fc[REND] $4,$5,$6,$7
+      move[-1] 0 blend[0,REND] alpha
+      nm[0] REND
+    else
+      sh[REND] 0,2 warp. ..,3,1,3,1 rm.
+    fi
+    keep[REND]
+  }
+
+pr_canvas_preview :
+  pr_canvas $*
+
+
+#@gui Paper Cuts : pr_papercuts, pr_papercuts_preview(0)
+#@gui : Description = note{"<span color="#EE5500"><b>Description:</b></span> \
+# Tries to simulate a papercut structure.
+#@gui : "}, sep = separator()
+#@gui : Simplification = ~float(3,0,32)
+#@gui : Local Normalization = ~float(0,0,6)
+#@gui : Colors* ( RAM hungry! ) = int(8,2,40)
+#@gui : Color mode = ~choice(1,"Original","Monochrome","Random")
+#@gui : Monochrome Color = ~color(80,127,255)
+#@gui : Color Variation (Off if Random) = ~int(0,0,10)
+#@gui : Sorting = ~choice(14,"None","Reverse","Shuffle","Minimum Value X","Minimum Value Y",\
+#"Minimum Value Z","Minimum Value C","Maximum Value X","Maximum Value Y",\
+#"Maximum Value Z","Maximum Value C","Red","Green","Blue","Alpha",\
+#"Minimum Deviation","Maximum Deviation","Average Deviation","Variance Deviation",\
+#"Standard Deviation","Sum Value","Product Value","Median Value",\
+#"L2-Norm","Width","Height","Depth")
+#@gui : Ordering = ~choice(1,"Forward","Backward")
+#@gui : sep = separator()
+#@gui : note = note("<span color="#EE5500"><small><b>Shadows:</b></small></span>")
+#@gui : Softness = ~float(4,0,6)
+#@gui : Opacity = ~float(0.6,0,1)
+#@gui : Shifting = ~float(4,0,10)
+#@gui : Light angle (degrees) = ~choice(0,"0","45","90","135","180","225","270","315","360")
+#@gui : sep = separator()
+#@gui : Multiple Layers = bool(1,0,1)
+#@gui : note = note("<small><b>First layer will contain all other layers, merged</b></small>")
+#@gui : sep = separator()
+#@gui : note = note("<span color="#EE5500"><small><b>Imperfections:</b></small></span>")
+#@gui : Color Dithering = ~bool(0,0,1)
+#@gui : Deformation = ~float(0,0,40)
+#@gui : Seed = ~int(0,0,100000)
+#@gui : Canvas Effect = bool(1,0,1)
+#@gui : Canvas Strength = ~float(0.6,0,1)
+#@gui : Downscaling % (Uses less RAM)= float(100,1,100)
+#@gui : sep = separator()
+#@gui : note = note("<small>Author: <i>Prawnsushi</i>.\
+## Latest Update: <i>2023/04/09</i>.</small>")
+#@gui : sep = separator()
+#@gui : note = note("<small>*Depends on the number of colors in the indexed version of the input image.\
+#\n If "Output to Multiple Layers" is checked, 1 color = 1 layer. \n Try not to use a lot of colors if you have less than 16 GB of RAM, or use downsampling.\
+#\n Preview itself is already downscaled by 50% unless you choose a value lower than 100.</small>")
+pr_papercuts :
+  foreach {
+    simp,ln,lay,col,cr,cg,cb,cvar,sort,order,shb,sho,sx,ang,mulay,ind,def,seed,cvs,cstr,down=$*
+    arg0 $9,\
+      "none","rv","u","xm","ym","zm","cm","xM","yM","zM","cM","R","G","B","A",\
+      "im","iM","ia","iv","id","is","ip","ic","in","w","h","z"
+    sort=${}
+    arg0 $10,"+","-" order=${}
+    arg0 $14,"0","45","90","135","180","225","270","315","360" ang=${}
+    to_rgb
+    wi,he:=w,h
+    if $down<100 r $down%,$down%,100%,100%,3 coeff:=$down/100 simp,ln,shb,def*=$coeff else coeff=1 fi
+    to_rgb n 0,255
+    if $ln normalize_local $ln,$ln fi
+    if $simp
+      b {$simp/5}
+      bilateral {[$simp*2,$simp*2]},0,0
+    fi
+    autoindex $lay,$ind,0 #b 0.7
+    split_colors 20,$lay,32 np=$!
+    if $def pr_deform $def,$seed,2 fi
+    sh 3 b[$np--1] {0.8*$coeff} rm[$np--1]
+      sh 0,2
+        if $col==0&&$cvar ap[$np--1] "adjust_colors ,,,{[u(-$8,$8),u(-$8)]},0,255" fi
+        if $col==1 ap[$np--1] "fc $5,$6,$7,255 adjust_colors ,,,{[u(-$8,$8),u(-$8)]},0,255" fi
+        if $col==2 ap[$np--1] "fc ${-rgb},255" fi
+        # dilate_circ 1.5
+      rm[$np--1]
+    if $9>1 sort_list $order,$sort fi
+    if $9==1 rv fi
+    # if $col==1 repeat $np { adj={$>*((50/$np))} adjust_colors[$>] -$adj,-$adj,-$adj,,0,255 }  fi
+    if $col==1 foreach { mul {0.97^$<} } fi
+    # n 0,255 sharpen 30       ##### USEFUL??
+
+    $wi,$he,1,3,[255,255,255]
+      foreach {
+        if $cvs
+          if $cstr pr_canvas $cstr,{u(20,30)},0 fi
+        fi
+        +rep_emboss_relief 5,$ang,1,2,1,0,1 blend alpha
+        +b $shb spread. {$shb/4}
+        sh. 0,2 fc. 0,0,0 rm.
+        if $sho<1  mul. $sho  fi
+        if $sx
+          # ang*=0.1
+          sx*=$coeff
+          if $ang==0||$ang==360 coords=-$sx,0
+          elif $ang==45 coords=-$sx,$sx
+          elif $ang==90 coords=0,$sx
+          elif $ang==135 coords=$sx,$sx
+          elif $ang==180 coords=$sx,0
+          elif $ang==225 coords=$sx,-$sx
+          elif $ang==270 coords=0,-$sx
+          elif $ang==315 coords=-$sx,-$sx
+          fi
+        shift. $coords
+        # shift. {$sx*[cos($ang),sin($ang)]} # Shadows shift
+        fi
+        #shrink_xy {$>*$coeff}
+        mv. 0 blend alpha
+      if $down<100 r $wi,$he,100%,100%,1 fi
+      # if $cstr pr_canvas $cstr,{u(20,30)},0 fi
+      normalize_local 0.3,0.3,0,0,1
+      }
+
+    to_rgb. negate.
+    mv. 0 if $mulay +blend alpha rv n 0,255 else blend alpha n 0,255 fi
+  }
+
+pr_papercuts_preview :
+  if $-1<100&&$-1!=50 pr_papercuts $* else pr_papercuts ${1--2},50 fi
+
+#@cli pr_thickspline : x0[%],y0[%],u0[%],v0[%],x1[%],y1[%],u1[%],v1[%],_lines_count,_spacing,_opacity,_color1,...
+#@cli : Draw a number of specified colored spline curves on selected images (cubic hermite spline).
+#@cli : Default values: 'lines_count=3' 'spacing=2', 'opacity=1' and 'color1=0'.
+#@cli : $ 400,400,1,3  repeat 30 { pr_thickspline {u([w,h,1000,1000,w,h,1000,1000,10,10])},0.5,${-rgb} }
+e[^-1] "Draw a number $9 of splines ($1,$2) - ($5,$6) on image$?, with spacing $10, opacity $11 and color (${12--1})."
+pr_thickspline : skip "${9=3},${10=2},${11=1},${12=0}"
+  if $10<=1 spline ${1-8},${11--1}
+  else foreach {
+    x0={if(ispercentage($1),$1*(w-1),$1)}
+    y0={if(ispercentage($2),$2*(h-1),$2)}
+    u0={if(ispercentage($3),$3*(w-1),$3)}
+    v0={if(ispercentage($4),$4*(h-1),$4)}
+    x1={if(ispercentage($5),$5*(w-1),$5)}
+    y1={if(ispercentage($6),$6*(h-1),$6)}
+    u1={if(ispercentage($7),$7*(w-1),$7)}
+    v1={if(ispercentage($8),$8*(h-1),$8)}
+    # th={round($9*0.5,1,1)}
+    th=$10
+      eval
+      it=0;${-math_lib}"repeat ( $9,spline(#0,["$x0-it","$y0-it"],["$u0-it*1","$v0+it*1"],["$x1-it","$y1-it"],["$u1-it*1","$v1+it*1"],$11,[${12--1}]);it+=$th )"
+  } fi
+
+
+#@gui Sick Painter : pr_sickpaint, pr_sickpaint_preview(0)
+#@gui : Description = note{"<span color="#EE5500"><b>Description:</b></span> \
+# An experimental effect that will detroy the image and throw paint everywhere like a mad painter.
+#@gui : "}, sep = separator()
+#@gui : Obstinacy = ~int(30,5,100)
+#@gui : Start X (px range) = ~int(0,-1000,1000)
+#@gui : Start Y (px range) = ~int(0,-1000,1000)
+#@gui : Step X (px range) = ~int(100,50,1000)
+#@gui : Step Y (px range) = ~int(100,50,1000)
+#@gui : Line Base Thickness (px range) = ~int(100,10,500)
+#@gui : Max opacity = ~float(0.7,0.01,1)
+#@gui : Min Opacity = ~float(0.4,0.01,1)
+#@gui : Anger & Rage = ~int(1000,1,2000)
+#@gui : Color 1 = ~color(255,0,0)
+#@gui : Color 2 = ~color(32,153,162)
+#@gui : Panels= ~int(12,3,50)
+#@gui : sep = separator()
+#@gui : note = note("<small>Author: <i>Prawnsushi</i>.\
+# Latest Update: <i>2023/08/17</i>.</small>")
+pr_sickpaint :
+  foreach {
+    to_rgb
+    div:=h/$4
+    # Rstep,Gstep,Bstep:=sqrt(($13-$10)^2)/$div,sqrt(($14-$11)^2)/$div,sqrt(($15-$12)^2)/$div
+    Rstep,Gstep,Bstep:=sqrt(([${13-15}]-[${10-12}])^2)/($div*1.5)
+      repeat $1 {
+      sx,sy,ex,ey:=u($2),u($3),u($2),u($3)
+      Rs,Gs,Bs=$10,$11,$12
+      if $8<1 o:=u($8,$7) else o=1 fi
+      do
+        # ls,d:=$6,u($9)
+        ls,d:=u($6)/($>+1)*2,u($9)
+        ex,ey+=u($4),u($5)
+        # if $8<1 o:=u($8,$7) else o=1 fi
+        # randomize order?
+        thickline {[u($sx)*3,u($sy)*3,$ex+u($>*2),$ey+u($>*2),u($ls)]},$o,$Rs,$Gs,$Bs
+        thickline $sx,$sy,$ex,$ey,$ls,$o,0,0,0
+        circle $sx,$sy,{$ls*0.3},$o,$Rs,$Gs,$Bs
+        cx,cy:=u($>*100),u($>*100)
+        # thickline $sx,$sy,{[$ex+$cx,$ey+$cy]},$ls,$o,$Rs,$Gs,$Bs
+        circle {[$sx+$cx,$sy+$cy,$ls*0.3]},$o,$Rs,$Gs,$Bs
+        circle {[$sx+u($>)*2,$sy+u($>)*2,u(5),u(0.5)]},0,0,0
+        pr_thickspline {[$sx+$>,$sy+$>,u(-$d,$d),0,$ex+$>,$ey+$>,u(-$d,$d),0,u(10,30),u(2,50),$o,$Rs,$Gs,$Bs]}
+        pr_thickspline {[$sx-$>,$sy-$>,u(-$d,$d),u(-$d,$d),$ex-$>,$ey-$>,u(-$d,$d),u(-$d,$d),u(10,30),u(2,50),$o,0,0,0]}
+        # spline {[$sx+$>,$sy+$>,$d,$d,$ex+$>,$ey+$>,$d,$d,$o,0,0,0]}
+        if $10>$13 Rs-=$Rstep else Rs+=$Rstep fi
+        if $11>$14 Gs-=$Gstep else Gs+=$Gstep fi
+        if $12>$15 Bs-=$Bstep else Bs+=$Bstep fi
+        sx,sy=$ex,$ey
+        # cut 0,255
+      while $ey<=h||$ex<=w
+
+      if $ey>=h||$ex>=w
+        repeat 1 {
+        rotate {[g,0,0,u(150)%,u(150)%]}        # round(u(3))
+        s x,$16 foreach { nm {$>/100} } sort_list -,u
+        mirror[{round(u($!-1))},0,-1] x
+        mirror[{round(u($!-1))},0,-1] y
+        shift[1] {[[u(-10,10),u(-10,10)],0,0,floor(u(3.9))]},0
+        spread[1] {u(0.8)} pr_deform[1] {u(2.8)},0,2,0
+        sort_list -,n
+        a x
+        }
+      fi
+    }
+    sharpen 1800
+    smooth 40,0,1,1,2
+    rep_emboss_relief 5,0,0.5,1,1,0,1
+}
+
+pr_sickpaint_preview :
+pr_sickpaint $*
+
+
+#@cli pr_dab: image_1,image_2,...
+#@cli : Create alpha-blended images using existing images and insert onto the last list. If no arguments are specified, all images are blended as a new layer.
+pr_dab :
+if $!>1
+  if $#>1 +blend[$*] alpha
+  else +blend alpha
+  fi
+fi
+display
+
+
+#@cli pr_deform: _amplitude>=0,_seed>=0,_scale>0.3,_interpolation,_mode,_boundary_conditions
+#@cli : "Apply random or seeded smooth deformation on images.
+#@cli : 'seed' can be { 0=random) | >0=fixed seed }.
+#@cli : 'interpolation' can be { 0=none | 1=linear | 2=bicubic }.
+#@cli : 'mode' can be { 0:backward-absolute | 1:backward-relative | 2:forward-absolute | 3:forward-relative }.
+#@cli : 'boundary_conditions' can be { 0:dirichlet | 1:neumann | 2:periodic | 3:mirror }.
+#@cli : Default value: 'amplitude=10', 'seed=0', 'scale=1', 'interpolation=2', 'mode=1', 'boundary_conditions=1'
+#@cli : $ image.jpg +pr_deform[0] 10 +pr_deform[0] 20,777,5,2,3,3
+pr_deform : skip "${1=10},${2=0},${3=1},${4=2},${5=1},${6=1}"
+  e[^-1] "Apply random smooth deformation on image$?, with amplitude $1, seed $2, scale $3, interpolation $4, mode $5 and boundary conditions $6"
+  if $3<=0 dim=0.3 else dim=$3 fi
+  foreach { $dim%,$dim%,1,2 if $2 srand $2 fi noise. $1 r. ..,..,1,2,6 warp.. .,$5,$4,$6 rm. }
+
+
+
+#@gui Iris : pr_iris,pr_iris_gui
+#@gui : Description = note{"<span color="#EE5500"><b>Description:</b></span> \
+# Renders a pupil and iris texture.
+#@gui : "}, sep = separator()
+#@gui : Resolution = int(800,800,2048)
+#@gui : Internal 2x Upscale = bool(1,0,1)
+#@gui : Iris Lines Size = ~float(10,2,200)
+#@gui : Pupil Height = ~float(0.4,0,1)
+#@gui : Pupil Width = ~float(0.4,0,1)
+#@gui : Fire Ring Height = ~float(20,0,40)
+#@gui : Fire Ring Width = ~float(20,0,40)
+#@gui : Defect Width = ~float(0,0,200)
+#@gui : Ring Width = ~float(100,0,200)
+#@gui : Seed (0:Random) = ~int(0,0,999999)
+#@gui : Color 1 = ~color(100,100,0)
+#@gui : Color 2 = ~color(30,150,150)
+#@gui : Color 3 = ~color(255,100,0)
+#@gui : Variation = ~int(50,0,200)
+#@gui : sep = separator()
+#@gui : note = note("<small>Author: <i>Prawnsushi</i>.\
+# Latest Update: <i>2023/09/08</i>.</small>")
+pr_iris_gui :
+pr_iris ${1--1}
+
+
+#@cli pr_iris : _resolution,_double_res,_iris_lines_width,_pupil_height,_pupil_width,_fire_ring_height,\
+# _fire_ring_width,_defect_width,_ring_width,_seed,_colorA1,...,_colorA3,_colorB1,..,_colorB3,_colorC1,..,_colorC3,_variation
+#@cli : WORK IN PROGRESS : Draws an eye's iris and pupil in a new image
+#@cli : Default value: 'resolution=800', 'double_res=0', 'iris_lines_size=10', 'Pupil_height=0.4', 'pupil_width=0.4', 'defect_width=120', 'ring_width=80', 'seed=0' 'colorA=100,100,0]', 'colorB=30,150,200', 'colorC=255,150,0','variation=20'
+#@cli : $ pr_iris 800,1
+#@cli : pr_iris 800,,10,0.8,0.1,100,30,777
+#@cli : pr_iris 800,1,10,0.3,0.3,10,120,0,0,100,250,0,100,100,255,200,0,100
+pr_iris :
+  check  "${1=800}>=800          && \
+          ${2=1}>=0              && \
+          ${3=10}>0              && \
+          ${4=0.4}>=0            && \
+          ${5=0.4}>=0            && \
+          ${6=20}>=0             && \
+          ${7=20}>=0             && \
+          ${8=130}>=0            && \
+          ${9=80}>=0             && \
+          ${10=0}>=0             && \
+          ${11=100}>=0           && \
+          ${12=100}>=0           && \
+          ${13=0}>=0             && \
+          ${14=30}>=0            && \
+          ${15=150}>=0           && \
+          ${16=150}>=0           && \
+          ${17=255}>=0           && \
+          ${18=100}>=0           && \
+          ${19=0}>=0             && \
+          ${20=20}>=0"
+
+res,dbl,th,puph,pupw,fireh,firew,def,ring,seed,ra,ga,ba,rb,gb,bb,rc,gc,bc,var=${1--1}
+to_rgba
+r $res,$res,100%,100%,0
+foreach {
+  wh=255,255,255 bk=0,0,0
+  if $def $def%,$def%,1,4,$bk,0 fi
+  to_a if $dbl rs 200%,,0 fi
+  foreach {
+    r:=(w*0.5)-10  R:=$r+$def
+    RGB:=v([$ra,$ga,$ba],[$ra+v(-$var,$var),$ga+v(-$var,$var),$ba+v(-$var,$var)])
+    repeat 180 { ch:=v(5) if $ch>=1 col=$RGB else col=$bk fi thickline 50%,50%,$th*{w*cos($>)},$th*{w*sin($>)},$th*2,0.9,$col }
+    pr_deform. 2,$seed,1,1,1,3
+    repeat 180 {
+      ch:=v(5) if $ch>=3
+      st:=$>*$th sx,sy,ex,ey:=$st,0,w-$st,h
+      RGB:=v([$rb,$gb,$bb],[$rb+v(-$var,$var),$gb+v(-$var,$var),$bb+v(-$var,$var)])
+      sh=1.5
+      thickline {[$sx-$sh,$sy-$sh,$ex-$sh,$ey-$sh,v($th)]},0.7,$RGB
+      sx,sy,ex,ey:=0,$st,w,h-$st
+      thickline {[$sx-$sh,$sy-$sh,$ex-$sh,$ey-$sh,v($th)]},0.7,$RGB
+      fi
+    }
+  }
+  flower. {[4,13,0,u(150)]} pr_deform. 20,$seed,1,1,1,3
+  repeat 2 +pr_deform[0] 4,{$seed*$>+1},5,1,3,3  sh. 3 gaussian. 50%  n. 0,255 rm.  done
+  repeat 3 pr_deform.. 3,{$seed*$>+1},{$>+1},1,3,3  done
+  mirror. y
+  blend[-1,0] alpha
+  mul. 3 blend[-1,0] overlay
+  # Defect
+  if $def
+    +adjust_colors. ,,70 rs. 105% expand. xy,100
+    dilate. {$def/2} b. 15
+    adjust_colors.. -25
+    rv[-1,-2]  blend[-2,-1] alpha spread. 15
+    blend overlay,0.9
+  fi
+  srand $seed +plasma , to_graya. blend add,0.3
+  # Fire Ring (?)
+  .,.,1,4,$bk,0 .
+  l.. { ellipse. 50%,50%,$firew%,$fireh%,0,1,$rc,$gc,$bc
+        sh. 3 ellipse. 50%,50%,{$firew-3}%,{$fireh-3}%,0,1,$bk rm. }
+  l.  { ellipse. 50%,50%,{$firew+3}%,{$fireh+3}%,0,1,{[$rc+100,$gc+100,$bc]}
+        sh. 3 ellipse. 50%,50%,{$firew-3}%,{$fireh-3}%,0,1,$bk rm. }
+  blend[-1,-2] alpha
+  flower. {[4,13,0,u(150)]} pr_deform. 40,$seed,3,1,1,3 blur_radial. 1.6% sharpen. 3000 blend alpha,0.4
+
+  # Outer ring
+  r,th:=(w*0.5)-10,20
+  .,.,1,4,$bk,0
+  l. {
+    circle 50%,50%,{$r+10},1,$wh
+    circle 50%,50%,{$r-$ring},1,$wh,0 b {$ring*0.2}
+    sh 0,2 negate. rm.
+    . N:=$>+1 flower. {[$N*0.5,$N*u(200,300),0,u(350)]},50%,50%,0
+    pr_deform. 2,$seed,6,0 blend grainmerge
+    }
+  blend[0,-1] alpha
+  # Pupil
+  R:=$r*$puph
+  .,.,.,.,$bk,0
+  sh. 3
+  ellipse. 50%,50%,{[$r*$pupw,$r*$puph]},0,1,$wh
+  rm.
+  N:=$>+1 flower. {[$N*0.5,$N*80,0,u(150)]}
+  pr_deform. 8,$seed,6,0
+  blur_radial. 0.4%
+  blend alpha
+  sh 3 fc. $bk circle. 50%,50%,$r,1,$wh erode. {$ring*0.2} b. 5 rm.
+  if $dbl rs 50% fi
+  pr_deform 1.5,$seed,2,1 #b 1
+  c 0,255
+}
+
+
+#@cli pr_dcm8 : _strength,_interpolation
+#@cli : Quickly pixelizes an image.
+#@cli : Interpolation can be { -1:none (memory content) | 0:none | 1:nearest | 2:average | 3:linear | 4=grid | 5=bicubic | 6=lanczos }.
+#@cli : Default value: 'strength=20', 'interpolation=1'
+#@cli : pr_dcm8 20
+pr_dcm8 : skip "${1=20},${2=1}"
+foreach {
+  wi,he:=w,h
+  if $1
+    rs $1%,0,$2
+    rs $wi,0,$2
+  fi
+}
+
+
+
+#@gui Little Boxy Things :  pr_lilboxy,pr_lilboxy_gui(0)
+#@gui : Description = note{"<span color="#EE5500"><b>Description:</b></span> \
+# Uses decimation and oversharpening to give a mosaic look to an image.
+#@gui : "}, sep = separator()
+#@gui : Decimate  = ~float(20,0,100)
+#@gui : Dilate X  = ~float(40,0,500)
+#@gui : Dilate Y  = ~float(60,0,500)
+#@gui : Erode X   = ~float(2,0,50)
+#@gui : Erode Y   = ~float(2,0,50)
+#@gui : Angle     = ~float(0,0,360)
+#@gui : Gaps Color = ~color(0,0,0,255)
+#@gui : sep = separator()
+#@gui : note = note("<small>Author: <i>Prawnsushi</i>.\
+# Latest Update: <i>2024/02/13</i>.</small>")
+pr_lilboxy_gui :
+pr_lilboxy $*
+
+#@cli pr_lilboxy : decimate,dilate_X,dilate_Y,erode_X,erode_Y,angle,color1--color3,alpha
+#@cli : Uses decimation and oversharpening to give a mosaic look to an image.
+#@cli : Default value: 'decimate=20','dilate_X=40','dilate_Y=60','erode_X=2','erode_Y=2','angle=0','color1--color3=0','alpha=255'
+#@cli : pr_lilboxy 50,80,160,8,16,255,80,160,255
+pr_lilboxy : skip "${1=20},${2=40},${3=60},${4=2},${5=2},${6=0},${7=0},${8=0},${9=0},${10=255}"
+foreach {
+  wi,he:=w,h
+  to_rgba
+  if $6>0&&$6!=360 rotate $6,0,0 fi
+  if $1 pr_dcm8 $1,4 fi
+  if $2||$3 dilate $2,$3 fi
+  sharpen 100000
+  if $4||$5 erode $4,$5 fi
+  if $6>0&&$6!=360
+    rotate. -$6,0,0,50%,50%
+    +autocrop. 0
+    if !w rm. to "Bam! Every pixel was eradicated!\nTry adjusting the sliders again.",10,10,3% else rm.. fi
+  fi
+  +fc $7,$8,$9,$10
+  rv  blend alpha
+  # r $wi,$he,100%,100%,0
+}
+
+
+#@gui Smoothelate :  pr_smoothelate,pr_smoothelate_gui(0)*
+#@gui : Description = note{"<span color="#EE5500"><b>Description:</b></span> \
+# Decimates and smoothes an image to give a melted mosaic look. \
+# If colors is set lower than 2, then the filter will not reduce colors.
+#@gui : "}, sep = separator()
+#@gui : Saturation  = ~int(0,0,100)
+#@gui : Colors  = ~int(0,0,256)
+#@gui : Remove Hotpixels = int(0,0,20)
+#@gui : Decimate = ~float(2.5,0,5)
+#@gui : Smooth = ~float(4,0,100)
+#@gui : Sharpen = ~int(500,0,1000)
+#@gui : Sharp Smooth Iterations = int(3,1,20)
+#@gui : Dilate - Erode= ~int(0,-10,10)
+#@gui : sep = separator()
+#@gui : note = note("<small>Author: <i>Prawnsushi</i>.\
+# Latest Update: <i>2024/02/12</i>.</small>")
+ #@gui : note = note("This is a crossover betweenn pixelation and smoothing. <br> If "Colors" is set lower than 2, then the filter will not reduce colors.")
+pr_smoothelate_gui :
+pr_smoothelate $*
+
+#@cli pr_smoothelate : saturation,colors,remove_hotpixels,decimate,smooth,sharpen,repeat,dilate-erode
+#@cli : Decimates and smoothes an image to give a melted mosaic look.
+#@cli : If colors is set lower than 2, then the filter will not reduce colors.
+#@cli : dilate - erode : positive = dilate, negative = erode
+#@cli : Default value: 'saturation=0','colors=0','remove_hotpixels=0','decimate=3','smooth=4','sharpen=100','repeat=3','dilate-erode=0'
+#@cli : pr_smoothelate 0,16,0,8,4,1000,3,-3
+
+pr_smoothelate: skip "${1=0},${2=0},${3=0},${4=5},${5=4},${6=500},${7=3},${8=0}"
+foreach {
+  wi,he:=w,h
+  if $1 adjust_colors ,,,,$1 fi
+  if $2>1 autoindex $2,0,0 fi
+  if $3  remove_hotpixels $3,$3 fi
+  if $4 pr_dcm8 $4 fi
+  repeat $7 {
+  if $6 sharpen $6 fi
+  b 0.7
+  if $5 smooth {$5*100},0,1,2,2,0.8,30,1,0,1 fi
+  }
+  if $8
+    if $8>0
+      dilate {$8+1}
+    else
+      erode {abs($8)+1}
+    fi
+  fi
+  n 0,255
+}
+
+
+#@gui Seamless Chaotic Pattern:  pr_scpat,pr_scpat_gui(3)*
+#@gui : Description = note{"<span color="#EE5500"><b>Description:</b></span> \
+# Draws all kinds of lines, ellipses and polygons on the image.
+#@gui : "}, sep = separator()
+#@gui : Margin Left (%)  = ~float(0,0,100)
+#@gui : Margin Right (%)  = ~float(0,0,100)
+#@gui : Margin Top (%) = ~float(0,0,100)
+#@gui : Margin Bottom (%)  = ~float(0,0,100)
+#@gui : Quads = ~int(5,0,10)
+#@gui : Rectangles = ~int(5,0,10)
+#@gui : Triangles = ~int(5,0,10)
+#@gui : Circles = ~int(5,0,10)
+#@gui : Ellipses = ~int(5,0,10)
+#@gui : Lines = ~int(5,0,10)
+#@gui : Splines = ~int(5,0,10)
+#@gui : Layers* = ~int(10,1,20)
+#@gui : Dilate = ~int(2,0,20)
+#@gui : Outline Pattern - All but Splines = text(0,0xFFFFFFFF)
+#@gui : Seed = ~int(0,0,1000000)
+#@gui : Tiles** = ~int(0,0,2)
+#@gui : Shift X = ~int(40,0,100)
+#@gui : Shift Y = ~int(60,0,100)
+#@gui : Color 1*** = ~color(255,0,0)
+#@gui : Color 2 = ~color(255,113,57)
+#@gui : Color 3 = ~color(255,255,0)
+#@gui : Color 4 = ~color(85,0,255)
+#@gui : Color 5 = ~color(0,0,255)
+#@gui : Color 6 = ~color(0,113,165)
+#@gui : Color 7 = ~color(85,170,0)
+#@gui : Color 8 = ~color(255,255,255)
+#@gui : sep = separator()
+#@gui : note = note("<small>Author: <i>Prawnsushi</i>.\
+# Latest Update: <i>2025/01/13</i>.</small>")
+#@gui : note = note("<small><i>* This will create n layers +1 for the preview.</i></small>")
+#@gui : note = note("<small><i>** Mostly for preview. Layers will be resized to the width and height of the original file.\
+# This won't make your original image seamless.</i></small>")
+#@gui : note = note("<small><i>*** Colors will be randomly chosen in this list.</i></small>")
+pr_scpat_gui :
+pr_scpat $*
+if $12>1 rv +blend alpha,1 =>. Merged mv[Merged] 0 fi
+rm[1]
+
+#@cli pr_scpat : Margin Left (%),Margin Right (%),Margin Top (%),Margin Bottom (%),Quads,Rectangles,Triangles,Circles,Ellipses,Lines,Splines,Dilate,Outline_Pattern,Seed,Tiles,Shift X,Shift Y,color1_1,color1_2,_color1_3,[...],_color8_1,color8_2,_color8_3
+#@cli : Creates a seamless pattern of randomly positioned lines, splines and geometric (outlined) shapes.
+#@cli : Default values: 'Margin_Left_(%)=0','Margin_Right_(%)=0','Margin_Top_(%)=0','Margin_Bottom_(%)=0','Quads=1','Rectangles=1','Triangles=1','Circles=5','Ellipses=2','Lines=0','Splines=4','Dilate=5','Outline_Pattern=0xFFFFFFFF','Seed=0','Tiles=0','Shift_X=40','Shift_Y=60','color1_1=255','color1_2=0','_color1_3=0,...see_below:'
+#@cli : 500,500,1,3,0 pr_scpat 0,0,0,0,1,1,1,5,2,0,4,10,5,"0xFFFFFFFF",0,0,40,60,255,0,0,255,113,57,255,255,0,85,0,255,0,0,255,0,113,165,85,170,0,255,255,255
+pr_scpat : skip "${1=0},${2=0},${3=0},${4=0},${5=1},${6=1},${7=1},${8=5},${9=2},${10=0},${11=4},${12=10},${13=5},${14=0xFFFFFFFF},${15=0},${16=0},${17=40},${18=60},${19=255},${20=0},${21=0},${22=255},${23=113},${24=57},${25=255},${26=255},${27=0},${28=85},${29=0},${30=255},${31=0},${32=0},${33=255},${34=0},${35=113},${36=165},${37=85},${38=170},${39=0},${40=255},${41=255},${42=255}"
+
+foreach {
+	+to_rgba f. 0
+	ML,MR,MT,MB:=$1,100-$2,$3,100-$4
+	if ${"is_pattern \"$14\""} pat=$14 else pat=0xFFFFFFFF badpat=1 fi
+	m "$0_rcol : u {[${19--1}][3*int(u(8)%8),3]}" # Thanks @ David!
+
+	if $15 srand $15 fi
+	repeat $12 {
+		[1]
+		col=${-$0_rcol}
+		repeat $5 { PS:=40 polygon. 4,{u($ML,$PS)}%,{u($MT,$PS)}%,{u($PS,$MR)}%,{u($MT,$PS)}%,{u($PS,$MR)}%,{u($PS,$MB)}%,{u($ML,$PS)}%,{u($PS,$MB)}%,1,$pat,$col,255 }
+		repeat $6 { rectangle. {u($ML,$MR)}%,{u($MT,$MB)}%,{u($ML,$MR)}%,{u($MT,$MB)}%,1,$pat,$col,255 }
+		repeat $7 { polygon. 3,{u($ML,$MR)}%,{u($MT,$MB)}%,{u($ML,$MR)}%,{u($MT,$MB)}%,{u($ML,$MR)}%,{u($MT,$MB)}%,1,$pat,$col,255 }
+		repeat $8 { CR:=u(1,10) CX:=u($ML+$CR*2,$MR-$CR*2) CY:=u($MT+$CR*2,$MB-$CR*2) circle. $CX%,$CY%,$CR%,1,$pat,$col,255 }
+		repeat $9 { CR:=u(1,10) CX:=u($ML+$CR*2,$MR-$CR*2) CY:=u($MT+$CR*2,$MB-$CR*2) ellipse. $CX%,$CY%,$CR%,{u($CR,$CR*6)},{u(180)},1,$pat,$col,255 }
+		repeat $10 { line. {u($ML,$MR)}%,{u($MT,$MB)}%,{u($ML,$MR)}%,{u($MT,$MB)}%,1,$pat,$col,255 }
+		repeat $11 { O=5 spline. {u($ML+$O,$MR-$O)}%,{u($MT+$O,$MB-$O)}%,{u($ML/2,$MR/2)}%,{u($MT/2,$MB/2)}%,{u($ML+$O,$MR-$O)}%,{u($MT+$O,$MB-$O)}%,{u($ML/2,$MR/2)}%,{u($MT/2,$MB/2)}%,1,$col,255 }
+		if $17 shift[2--1] $17%,0,0,0,2 fi if $18 shift[2--1] 0,$18%,0,0,2 fi
+	}
+	if $13 foreach[^0,1] { dilate {[u($13/10,$13)+1,u($13/10,$13)+1]} } fi
+	repeat $16 { foreach { W,H:=w,h . a x . a y r $W,$H,100%,100%,1 } }
+	rm[1]
+	mv[0] $!
+	um $0_rcol
+	if $badpat
+		alert "Wrong Pattern Value",\
+		"Wrong Pattern Value.\n\
+		Must be an Hexadecimal code.\n\
+		Reverted to default '0xFFFFFFFF'.\n\
+		Use numbers [0-9] and letters [A-F].\n\
+		Examples:\n0x1\n0xF0\n0xAABB11D3"
+	fi
+}
+
+
+#@gui Gimp Random Layer Modes: pr_laymod,pr_laymod_preview
+#@gui : Description = note{"<span color="#EE5500"><b>Description:</b></span> \
+# Randomizes the fusion modes in an image containing multiple layers.
+#@gui : "}, sep = separator()
+#@gui : note = note("<small><i>Please select all layers. Base layer will not be changed.</i></small>")
+#@gui : Randomize Layer Stack = ~bool(0,0,1)
+#@gui : Min Opacity = ~int(30,0,100)
+#@gui : Max Opacity = ~int(70,0,100)
+#@gui : Addition = ~bool(0,0,1)
+#@gui : Burn = ~bool(0,0,1)
+#@gui : Darken = ~bool(0,0,1)
+#@gui : Difference = ~bool(0,0,1)
+#@gui : Divide = ~bool(0,0,1)
+#@gui : Dodge = ~bool(0,0,1)
+#@gui : Exclusion = ~bool(0,0,1)
+#@gui : Grain Extract = ~bool(0,0,1)
+#@gui : Grain Merge = ~bool(0,0,1)
+#@gui : Hard Light = ~bool(0,0,1)
+#@gui : Hard Mix = ~bool(0,0,1)
+#@gui : Hue = ~bool(0,0,1)
+#@gui : LCH Lightness = ~bool(0,0,1)
+#@gui : Lighten = ~bool(0,0,1)
+#@gui : Linear Light = ~bool(0,0,1)
+#@gui : Luminance = ~bool(0,0,1)
+#@gui : Multiply = ~bool(0,0,1)
+#@gui : Overlay = ~bool(0,0,1)
+#@gui : Pin Light = ~bool(0,0,1)
+#@gui : Saturation = ~bool(0,0,1)
+#@gui : Screen = ~bool(0,0,1)
+#@gui : Soft Light = ~bool(0,0,1)
+#@gui : Subtract = ~bool(0,0,1)
+#@gui : Value = ~bool(0,0,1)
+#@gui : Vivid Light = ~bool(0,0,1)
+#@gui : Color = ~bool(0,0,1)
+#@gui : LCH Color = ~bool(0,0,1)
+#@gui : LCH Chroma = ~bool(0,0,1)
+#@gui : Erase = ~bool(0,0,1)
+#@gui : Luma Darken = ~bool(0,0,1)
+#@gui : Luma Lighten = ~bool(0,0,1)
+#@gui : Color Erase = ~bool(0,0,1)
+#@gui : Merge = ~bool(0,0,1)
+#@gui : LCH Hue = ~bool(0,0,1)
+#@gui : Dissolve = ~bool(0,0,1)
+#@gui : note = note("<small>Author: <i>Prawnsushi</i>.\
+# Latest Update: <i>2024/03/19</i>.</small>")
+
+pr_laymod_preview:
+  pr_laymod $*
+  blend overlay
+
+
+pr_laymod:
+
+  i,nb,sep=1,0,
+  if $1 sort_list[^-1] +,u fi
+
+  for $i<=($#-3)
+  {
+    val=${arg1\ $i,${4--1}}
+    if $val
+      arg1 $i,\
+      "addition","burn","darken","difference","divide","dodge","exclusion","grainextract","grainmerge","hardlight",\
+      "hardmix","hue","lchlightness","lighten","linearlight","luminance","multiply","overlay","pinlight","saturation",\
+      "screen","softlight","subtract","value","vividlight","color","lchcolor","lchchroma","erase","lumadarken",\
+      "lumalighten","colorerase","merge","lchhue","dissolve"
+      list.=$sep${}
+      sep=,
+    fi
+    i,nb+=1,$val
+  }
+
+  if $nb
+    foreach[^-1] {
+      mod=${"arg1 {v(1,narg("$list"))},"$list}
+      opac:=v($2,$3) => "mode("$mod"),opacity("$opac"),name("$mod-$opac")"
+    }
+  fi
+
+
+
+#@gui Nonscape - Woods : pr_nonwoods, pr_nonwoods_preview(1)*
+#@gui : Description = note{"<span color="#EE5500"><b>Description:</b></span> \
+# Render a 2D night scene with grass, trees, light, casted shadows and particles.
+#@gui : "}, sep = separator()
+#@gui : Reload current parameters = button(2)
+#@gui : Preview Scaling = int(50,1,100)
+#@gui : Output Size X = int(1920,256,4096)
+#@gui : Output Size Y = int(1080,256,4096)
+#@gui : note = note("<small><i>Downscaling will make preview update faster.</i></small>")
+
+#@gui : sep = separator()
+#@gui : note = note("<span color="#EE5500"><small><b>Light:</b></small></span>")
+#@gui : Light Source Location = ~point(80,5,0,0,255,255,0,255,6)
+#@gui : Source Width = float(3,0,100)
+#@gui : Source Height = float(3,0,100)
+#@gui : Rays Max Opacity = ~float(0.2,0,1)
+#@gui : Color = ~color(255,255,255)
+#@gui : Blending =  ~choice(34,"Add","Alpha","And","Average","Blue","Burn","Darken","Difference","Divide","Dodge",\
+# "Edges","Exclusion","Freeze","Grainextract","Grainmerge","Green","Hardlight","Hardmix","Hue","Interpolation",\
+# "Lchlightness","Lighten","Lightness","Linearburn","Linearlight","Luminance","Multiply","Negation","Or","Overlay",\
+# "Pinlight","Red","Reflect","Saturation","Screen","Seamless","Seamless_mixed","Softburn","Softdodge","Softlight","Stamp","Subtract","Value","Vividlight",\
+# "Xor")
+#@gui : Particles = ~int(1500,0,10000)
+#@gui : P. Max Opacity = ~float(1,0,1)
+#@gui : Color = ~color(255,255,255)
+#@gui : Rim Light Softness = ~float(0.8,0,2)
+
+#@gui : sep = separator()
+#@gui : note = note("<span color="#EE5500"><small><b>Trees:</b></small></span>")
+#@gui : Tree Shape Seed (0 : Random) = ~int(0,0,100000)
+#@gui : Tree Position Seed (0 : Random) = ~int(0,0,100000)
+#@gui : Complexity = int(10,5,20)
+#@gui : Simplify Back Rows = bool(0)
+#@gui : Deformity = float(4,0,50)
+#@gui : Deform Scale = ~float(2,0,10)
+#@gui : Height Adjust = ~float(0,-1,1)
+#@gui : Width Adjust = ~float(0,-0.2,0.2)
+#@gui : Amount = ~int(40,1,100)
+#@gui : Ground - Tree Ratio = ~float(50,10,100)
+#@gui : Vertical Shift = float(0,0,3)
+#@gui : note = note("<span color="#EE5500"><small><i>V-Shift is Broken!</i></small></span>")
+#@gui : Trunk Color = ~color(24,16,0)
+#@gui : Opacity = ~float(1,0,1)
+#@gui : Leaves Color = ~color(0,23,0)
+#@gui : Opacity = ~float(1,0,1)
+
+#@gui : sep = separator()
+#@gui : note = note("<span color="#EE5500"><small><b>Grass:</b></small></span>")
+#@gui : Grass color = ~color(38,76,56)
+#@gui : Color Variation = ~int(20,0,100)
+#@gui : Sparsity = ~int(3,1,100)
+#@gui : Height (0 : Off) = ~float(.12,0,.5)
+#@gui : Width (0 : Off) = ~float(8,0,30)
+#@gui : Tidiness = ~float(10,.1,80)
+#@gui : Undulations = ~float(20,0,80)
+#@gui : DupliCheat = ~int(10,1,10)
+#@gui : ShadeCheat = ~int(10,0,10)
+
+#@gui : sep = separator()
+#@gui : note = note("<span color="#EE5500"><small><b>Ambiance:</b></small></span>")
+#@gui : BG Top 1= ~color(0,46,67)
+#@gui : BG Top 2 = ~color(0,124,182)
+#@gui : BG Middle = ~color(255,255,255)
+#@gui : BG Bottom 1 = ~color(0,169,200)
+#@gui : BG Bottom 2 = ~color(0,85,127)
+#@gui : Opacity = ~float(0.4,0,1)
+#@gui : Blending =  ~choice(19,"Add","Alpha","And","Average","Blue","Burn","Darken","Difference","Divide","Dodge",\
+# "Edges","Exclusion","Freeze","Grainextract","Grainmerge","Green","Hardlight","Hardmix","Hue","Interpolation",\
+# "Lchlightness","Lighten","Lightness","Linearburn","Linearlight","Luminance","Multiply","Negation","Or","Overlay",\
+# "Pinlight","Red","Reflect","Saturation","Screen","Seamless","Seamless_mixed","Softburn","Softdodge","Softlight","Stamp","Subtract","Value","Vividlight",\
+# "Xor")
+#@gui : ??? = ~bool(0)
+#@gui : preview = bool(0)_0
+#@gui : sep = separator()
+#@gui : note = note("<span color="#EE5500"><small><b>Rotation:</b></small></span>")
+#@gui : note = note("<small>Author: <i>Prawnsushi</i>.\
+# Latest Update: <i>2024/05/19</i>.</small>")
+
+pr_nonwoods:
+  foreach {
+
+    rB,preSca,resX,resY,rayX,rayY,rayW,rayH,rayO,rayR,rayG,rayB,rayBL,partiN,partiO,partiR,partiG,partiB,rimO,\
+    treeS,tposS,treeComp,treeSimp,treeD,treeDS,treeH,treeW,treeCount,treeST,treeVS,trunR,trunG,trunB,trunO,leafR,leafG,leafB,leafO,\
+    graR,graG,graB,graCV,GraS,GraH,GraW,GraT,GraU,GraC,GraSH,\
+    bgtR,bgtG,bgtB,bgt2R,bgt2G,bgt2B,bgmR,bgmG,bgmB,\
+    bgbR,bgbG,bgbB,bgb2R,bgb2G,bgb2B,bgO,bgBL,RndEnc,prev=$*
+
+    W,H:=$resX,$resY
+    rm
+    trunO,leafO*=100
+    ENC=0
+
+    list_of_blending_modes=add,alpha,and,average,blue,burn,darken,difference,divide,dodge,edges,exclusion,freeze,grainextract,grainmerge,green,hardlight,hardmix,hue,interpolation,lchlightness,lighten,lightness,linearburn,linearlight,luminance,multiply,negation,or,overlay,pinlight,red,reflect,saturation,screen,seamless,seamless_mixed,softburn,softdodge,softlight,stamp,subtract,value,vividlight,xor
+    rayBL=${"arg0 $rayBL,"$list_of_blending_modes}
+    bgBL=${"arg0 $bgBL,"$list_of_blending_modes}
+
+    ($bgtR;$bgt2R;$bgmR;$bgbR;$bgb2R\
+    ^$bgtG;$bgt2G;$bgmG;$bgbG;$bgb2G\
+    ^$bgtB;$bgt2B;$bgmB;$bgbB;$bgb2B)
+    => BG
+    r $W,$H,[BG],[BG],1
+    pr_deform 50,0,.02,0,1,3
+    b 6%
+    +plasma , spread. 5
+    blend value,.25
+    n 0,255
+    R:=round($treeCount/2)
+    offm:=$W/$treeCount
+    offM:=$offm*2
+    if $prev&&$preSca<100 rs $preSca% treeD,partiN*=2*($preSca/100) fi
+    . =>. AMB
+    if $rayW&&$rayH repeat 8 ellipse[BG] $rayX%,$rayY%,$rayW%,$rayH%,0,$rayO,$rayR,$rayG,$rayB done fi
+    +b[BG] 2%
+    blend[BG,-1] lighten,.5
+    {w#$BG},{h#$BG*($treeST/100)} =>. TSIZE
+    _fx_tree[TSIZE] 6,10,{u(.3)},-.8,7.7,71.7,9.9,6,6,90,-90,0,200,0,29.6,35.4,$leafR,$leafG,$leafB,255,100,$leafR,$leafG,$leafB,255,100,0.4,.4 =>. BUSH
+    l[BUSH]
+      r 25%,100%
+      repeat 2 { [BUSH] autocrop. r. {u(80,100)}%,{u(80,100)}% a[BUSH,-1] x,1 }
+      pr_deform. $treeD,0,8,1,1,3
+    }
+    +to_a[BG] =>. TREES mv[TREES] 0 f[TREES] 0
+    store[AMB] AMB
+    store[BG] BG
+    store[BUSH] BUSH
+    store[TSIZE] TSIZE
+    ST=0
+    TSH_ST=0
+    repeat $R {
+      T:=$>+1
+      if $treeH>=0 TH:=1+$T/($treeCount*.5) else TH:=1-$T/($treeCount*.5) fi
+      if $treeW>=0 TW:=1+$< else TW:=1+$> fi
+          if $treeSimp
+            TC:=floor($treeComp^($T/$R))
+            if $TC<5&&$treeComp>5 TC=5 fi
+          else
+            TC=$treeComp
+          fi
+        repeat 2 {
+          if $treeS treeS+=$T+$> srand $treeS else srand fi
+          $TSIZE
+          _fx_tree[TSIZE] $TC,0,{$treeW/($TW/$treeComp)},{u($treeH*.98,$treeH)*$TH},10,200,{u(-15,15)},2,.8,-10,10,50,75,0,70,20,$trunR,$trunG,$trunB,255,$trunO,$leafR,$leafG,$leafB,255,$leafO,.4,.4
+          }
+        rm[TSIZE]
+        =>[-1,-2] Tree$T,Tree1$T
+        l[Tree$T,Tree1$T] {
+        rotate {u(-5,5)},0,0,50%,100%
+            if $tposS tposS+=$T srand $tposS else srand fi
+##### BUSHES
+            if {u(5)}>=4||$T>=$R
+              $BUSH
+              blend[-1,Tree$T] alpha,1
+              $BUSH
+              mirror[BUSH] x
+              blend[-1,Tree1$T] alpha,1
+            fi
+            shift[Tree$T] {$T*u($offm,$offM)}%,0,0,0,2,0
+            shift[Tree1$T] {-$T*u($offm,$offM)}%,0,0,0,2,0
+
+          if $RndEnc
+            if $>>$R*.8&&$ENC==0
+
+              shape_cupid {h/3} =>. ENCOUNTER
+              if v==1 mirror[ENCOUNTER] x fi
+              l[ENCOUNTER] { n 0,255 to_rgb s. c . ap[^-1] "f {v(100)}" a c }
+              r[ENCOUNTER] [Tree$T],[Tree$T],100%,100%,0,0,.5,.5,0,0
+              if $tposS srand $tposS fi
+              shift[ENCOUNTER] {u(-30,30)}%,{u(-10,30)}%
+              ENC=1
+              blend[Tree$T,ENCOUNTER] alpha,1
+            fi
+          fi
+
+          if $T>=$R*.3
+            if $prevSca<100 int=.1,.2 else int=.8,1 fi
+            if $treeD pr_deform $treeD,0,$treeDS,1,1,3 fi
+            light_relief {u($int)},.5,.5,{u(.04,.08)},$rimO,$rayX%,$rayY%,.0001,2,0
+          fi
+          blend[Tree$T,Tree1$T] alpha,1
+
+        }
+
+        [Tree$T] =>. TSH
+        if $treeVS
+          TY:=$<*(-$treeCount*$treeVS/$R)
+          shift[Tree$T] 0,$TY
+        fi
+        blend[TSH] alpha
+        if $prev CY:=$H*$preSca/100 else CY=$H fi
+        crop[Tree$T] 0,0,100%,$CY
+
+        blend[TREES,Tree$T] alpha
+
+        srand
+        if $bgO
+          if $>%10==1||$>==$R-1
+            $AMB blend[-1,TREES] $bgBL,$bgO
+          fi
+        fi
+        if $rayO
+          if $prev&&$preSca<100 den:=$preSca/10  else den=5 fi
+          if $>%10==1||$>==$R-1
+           +lightrays[TREES] $den,$rayX%,$rayY%,1,255
+             if $partiN&&$partiO
+              repeat $partiN {
+               ellipse. {u(100)}%,{u(100)}%,{u(.1)}%,{u(.1)}%,{u(180)},{u(.5,$partiO)},$partiR,$partiG,$partiB
+              }
+              b. .05% to_rgba. s. c rm. . a[-4--1] c
+            fi
+            .,.,1,3,[$rayR,$rayG,$rayB] blend[-1,-2] overlay,1
+            =>. RAYS
+            blend[RAYS] alpha
+          fi
+        fi
+  }
+  $BG rv
+
+######### Grass
+  if $GraH&&$GraW
+    [BG],[BG],1,4,0 =>. GRASS
+    pr_nongrass[GRASS] $GraS,$graR,$graG,$graB,$graCV,$treeST,105,$GraH,$GraW,$GraT,$GraU,0.7,$GraC,$GraSH
+    +crop[GRASS] 0,0,100%,{(h#$GRASS*$treeST/100)-1}
+    l. { s c f[^-1] 0 a c  }
+    r. 100%,{h#$GRASS},100%,100%,0,0,0,0,0,0 =>. GRASS
+    . r. 100%,{h#$TSH},100%,100%,0,0,0,0,0,0
+    blend[-1,TSH] alpha,1
+    blend[GRASS] multiply,.6
+    blend[GRASS,TREES] alpha
+  fi
+
+  blend[TREES,BG] alpha,1
+
+  ######### Shadows
+  l[TSH] {
+    mirror[TSH] y
+    r 100%,600%,100%,100%,0,0,0,0,0,0
+    warp_perspective {abs($rayY)},0,1,$rayX,0,0
+    r 100%,{10+abs($rayY)*8}%
+    spread {$W*(.05/100)}
+    s c f[^-1] y a c apc "n 0,255"
+    pr_deform 4,0,40,1,1,3
+    b .1%
+  }
+  if $prev&&$preSca<100 shS=$H*$preSca/100 else shS=$H fi
+  crop[TSH] 0,0,100%,{$shS-($shS*$treeST/100)}
+  r[TSH] 100%,{h#$TSH+($shS*$treeST/100)},100%,100%,0,0,0,1,0,0
+  blend[-1,TSH] multiply
+  blend[BG,TSH] multiply,.6
+  $BG b. 30
+  blend[BG] $bgBL,$bgO
+  if $rayO blend[RAYS,BG] $rayBL,{$rayO} fi
+  keep[0]
+  n 0,255
+}
+
+pr_nonwoods_preview:
+  pr_nonwoods ${1--2},1
+
+
+
+#@gui Nonscape - Grass : pr_nongrass, pr_nongrass_preview(1)*
+#@gui : Description = note{"<span color="#EE5500"><b>Description:</b></span> \
+# Renders a grass patch. Used in Nonscape - Woods.
+#@gui : "}, sep = separator()
+#@gui : Sparsity = ~int(3,1,100)
+#@gui : Color = ~color(36,144,30)
+#@gui : Color Variation = ~int(10,0,100)
+#@gui : Y Start = float(50,5,150)
+#@gui : Y End = float(100,0,150)
+#@gui : Height = ~float(.1,0,.5)
+#@gui : Width = ~float(6,.1,30)
+#@gui : Tidiness = ~float(20,.1,100)
+#@gui : Undulations = ~float(10,0,40)
+#@gui : Scale = ~float(.7,.1,10)
+#@gui : DupliCheat = ~int(10,0,10)
+#@gui : ShadeCheat = ~int(3,0,10)
+#@gui : note = note("<small>Author: <i>Prawnsushi</i>.\
+# Latest Update: <i>2024/05/19</i>.</small>")
+
+pr_nongrass:
+  Gsp,Rm,Gm,Bm,Cvar,Y,Yend,GH,GW,GT,GU,GUS,GC,ShCh=$*
+  to_a f 0
+  X,XB=0,5
+  bla:=$Y/255
+  do
+    ROW=$>
+    BLADEHm,BLADEHM:=u($GH*($>+1))
+    do
+      CHECK:=u($Gsp)
+      if $CHECK<=1
+          XA:=u($X-(5-(($ROW+1)/$GT)),$X+(5-(($ROW+1)/$GT)))
+          YA:=u($Y-$BLADEHm,$Y-$BLADEHM)
+          XB:=$X+($GW*$ROW/w)
+          CV:=u(-$Cvar,$Cvar)
+          if $Y>$6+5
+            SHXA:=$XA+u(-$GW,$GW)
+            polygon 3,{$X+.5}%,$Y%,$SHXA%,{$YA+1}%,{$XB-$ShCh}%,$Y%,.1,0,0,0,255
+          fi
+          polygon 3,$X%,$Y%,$XA%,$YA%,$XB%,$Y%,1,{$Rm+$CV},{$Gm+$CV},{$Bm+$CV},255
+      fi
+      X+={u(1,2)*($>/100)}
+    while $X<=100
+
+    Y+={u(.1,.15)*($>/(h/10))}
+    X=0
+    if $Rm>10 Rm-=$bla fi
+    if $Gm>10 Gm-=$bla fi
+    if $Bm>10 Bm-=$bla fi
+
+  while $Y<$Yend
+  n 0,255
+  sh. 3 n. 0,255  rm.
+  if $GC
+    repeat $GC {
+      . shift. 0,{($>+$GC)*.2}%,0,0,0
+      mirror. x
+    }
+  fi
+  if $GU ap "pr_deform $GU,0,$GUS,0,1,3" fi
+  blend alpha
+  . blend multiply,.7
+
+pr_nongrass_preview:
+  pr_nongrass $*
+
+
+
+
+#@gui 3D Abstract : pr_3dabstract,pr_3dabstract_preview(1)*
+#@gui : Description = note{"<span color="#EE5500"><b>Description:</b></span> \
+# Draws random colored 3d objects on the image to give an abscract psychedelic look.
+#@gui : "}, sep = separator()
+#@gui : Objects = ~int(5,2,20)
+#@gui : Complexity = ~int(20,2,100)
+#@gui : Mesh Resolution = int(128,16,256)
+#@gui : Smooth* = ~float(0,0,1)
+#@gui : Max Spin Angle* = ~float(360,0,360)
+#@gui : Min Opacity* = ~float(.5,0,1)
+#@gui : Max Opacity* = ~float(1,0,1)
+#@gui : Max Rotation* = ~float(90,0,360)
+#@gui : Min Zoom* = float(.8,0,3)
+#@gui : Max Zoom* = float(3,0,3)
+#@gui : Min FOV* = ~float(100,0,1000)
+#@gui : Max FOV* = ~float(500,0,1000)
+#@gui : note = note("<span color="#EE5500"><small><b>*Randomized per object.</b></small></span>")
+#@gui : Dilate = int(0,0,10)
+#@gui : Glow Mode=  ~choice(16,"Add","Alpha","And","Average","Blue","Burn","Darken","Difference","Divide","Dodge",\
+# "Edges","Exclusion","Freeze","Grainextract","Grainmerge","Green","Hardlight","Hardmix","Hue","Interpolation",\
+# "Lchlightness","Lighten","Lightness","Linearburn","Linearlight","Luminance","Multiply","Negation","Or","Overlay",\
+# "Pinlight","Red","Reflect","Saturation","Screen","Softburn","Softdodge","Softlight","Stamp","Subtract","Value","Vividlight",\
+# "Xor")
+#@gui : G. Spread = ~float(1,0,5)
+#@gui : G. Strength = ~float(0.3,0,1)
+#@gui : Render mode =  ~choice(4,"Dots","Wireframe","Flat","Flat shaded","Gouraud","Phong")
+#@gui : Layers Only* = bool(0)
+#@gui : note = note("<span color="#EE5500"><small><b>*Don't merge layers. Glow will not be applied.</b></small></span>")
+#@gui : Seed = ~int(0,0,9999999)
+#@gui : note = note("<small>Author: <i>Prawnsushi</i>.\
+# Latest Update: <i>2025/02/01</i>.</small>")
+
+pr_3dabstract:
+  obj,comp,rez,smooth,M_ang,m_opa,M_opa,M_rot,m_z,M_z,m_fov,M_fov,dil,g_mod,g_spread,g_opa,r_mod,lays,seed=$*
+
+  blending_modes=add,alpha,and,average,blue,burn,darken,difference,divide,dodge,edges,exclusion,freeze,grainextract,grainmerge,green,hardlight,hardmix,hue,interpolation,lchlightness,lighten,lightness,linearburn,linearlight,luminance,multiply,negation,or,overlay,pinlight,red,reflect,saturation,screen,softburn,softdodge,softlight,stamp,subtract,value,vividlight,xor
+  g_mod=${"arg0 $g_mod,"$blending_modes}
+
+  M_ang+=1
+  W,H:=w,h
+  size:=max($W,$H)
+  store BG
+  if $seed srand $seed fi
+
+  repeat $obj {
+      100,100,1,1
+      repeat $comp {
+          ellipse. {u(5,95)}%,{u(5,95)}%,{u(1,2)}%,{u(1,2)}%,{u(180)},1,255
+      }
+      if !$M_ang M_ang= fi
+      lathe3d. $rez,$smooth,$M_ang
+      double3d. 1
+      col3d. ${-rgb},{u($m_opa,$M_opa)}
+      if $M_rot
+        rot=
+        if $>%2==0 rot=- fi
+        rotate3d. 1,0,0,${rot}{u($M_rot)}
+      fi
+      mode3d. $r_mod
+      zoom,fov:=u($m_z,$M_z),u($m_fov,$M_fov)
+      snapshot3d. $size,$zoom,0,0,0,,$fov
+      +luminance. a[-1,-2] c
+  }
+
+  if $dil dilate_circ {$dil+1} fi
+  r $W,$H
+  $BG mv. 0
+  if !$lays blend alpha,1 fi
+  n 0,255
+  if $g_opa&&!$lays +b $g_spread%,0 mul. 2 blend $g_mod,$g_opa fi
+  rv
+
+pr_3dabstract_preview:
+pr_3dabstract $*
+rv blend alpha
+
+
+
+#@gui Stringify Mod : pr_stringify, pr_stringify(1)
+#@gui : Description = note{"<span color="#EE5500"><b>Description:</b></span> \
+# Reconstructs the image as if woven from continuous strings. \
+# This mods adds filled polygons, 128 color levels and an optional pre-process.
+#@gui : "}, sep = separator()
+#@gui : Pre-Process = choice(0,"Sponge","Erode","Dilate","Blur")
+#@gui : Process Strength = int(0,0,20)
+#@gui : Smoothness = ~int(1,0,10)
+#@gui : Levels = ~int(64,2,128)
+#@gui : Sampling rate (%) = ~float(50,0,100)
+#@gui : Link = ~choice(2,"2 points","3 points","3 points filled","4 points","4 points filled","All points")
+#@gui : Offset (%) = ~float(100,0,100)
+#@gui : Threshold = ~int(32,0,1024)
+#@gui : Opacity (%) = ~float(50,0,100)
+#@gui : Normalization (%) = ~float(10,0,100)
+#@gui : Fill holes = ~bool()
+#@gui : Background color = ~color(0,0,0,255)
+#@gui : sep = separator()
+#@gui : note = note("<small>Original Author: <i>David Tschumperlé</i>.</small>")
+#@gui : note = note("<small>Mod Author: <i>Prawnsushi</i>.      Latest Update: <i>2025/01/14</i>.</small>")
+pr_stringify:
+  process,procstr,smoothness,levels,sampling,link,offset,threshold,opacity,normalization,fill_holes,bgr,bgg,bgb,bga=${1-15}
+  foreach { to_rgb split_opacity l[0] {
+    to_rgba
+    if $procstr
+      if $process==0
+        com="sponge 10"
+        # com.=$procstr
+      elif $process==1
+        com="erode_circ "$procstr
+      elif $process==2
+        com="dilate_circ "$procstr
+      else
+        com="b "$procstr
+        procstr=3
+      fi
+    repeat $procstr {
+
+    run $com progress {lerp(0,12,($>+1)/($>+$<+1))}
+    }
+    fi
+    repeat $smoothness { smooth 60,0,1,1,1 progress {lerp(12,25,($>+1)/($>+$<+1))} }
+
+    +colormap. $levels,0 round. index.. .
+    [0],[0],1,4 fc. $bgr,$bgg,$bgb,$bga
+
+    # Extract all closed components and sort them by decreasing size.
+    repeat w#1 {
+      ind=$> color:="I[#1,$>]"
+      +==[0] $> N:=$!-1
+      edgels. ,
+      foreach[$N--1] { if h<=$threshold rm fi }
+      if $!>$N =>[$N--1] {:$color} fi
+      progress {lerp(25,75,($>+1)/($>+$<+1))}
+    }
+    sort_list[3--1] -,h
+
+    # Draw colored lines.
+    repeat $!-3 {
+      p:=$>+3 color={$p,n}
+      sh[$p] 100% f. "arg0((j[1,2]-i)%4,0,1,0,-1)" is_hole:=is!=4 rm.
+      if !$is_hole" || "$fill_holes
+        channels[$p] 0,1,2 rs[$p] ,$sampling%,1
+        eval[$p] ":begin(color = [ "$color" ]; const offset = h/($link + 2)*$offset%; ret = I);
+          P = I;
+            $link==5?(repeat (h,k,polygon(#2,2,P,I[k],$opacity%,color))):( # All-points link
+              Q = J[offset,2];
+              !$link?polygon(#2,2,P,Q,$opacity%,color):( # 2-point link
+                R = J[2*offset,2];
+                $link==1?polygon(#2,-3,P,Q,R,$opacity%,0xFFFFFFFF,color):( # 3-points link
+                  $link==2?polygon(#2,3,P,Q,R,$opacity%,color):( # 3-points link filled
+                    S = J[3*offset,2];
+                      $link==4?polygon(#2,4,P,Q,R,S,$opacity%,color):( # 4-points link filled
+                        $link==3?polygon(#2,-4,P,R,Q,S,$opacity%,0xFFFFFFFF,color) # 4-points link
+                    );
+                  );
+                );
+              );
+            ); ret"
+
+      fi
+      progress {lerp(75,100,($>+1)/($>+$<+1))}
+    }
+    k[2] normalize_local {$normalization/10}
+  } a c }
+
+
+#@gui Sketchy Ellipses : pr_sketchy_ellipses, pr_sketchy_ellipses(1)
+#@gui : Description = note{"<span color="#EE5500"><b>Description:</b></span> \
+# Draws a flurry of ellipses on the image.
+#@gui : "}, sep = separator()
+#@gui : Amount = int(2000,1,5000)
+#@gui : Center X = ~float(35,0,100)
+#@gui : Center Y = ~float(35,0,100)
+#@gui : Center XB = ~float(35,0,100)
+#@gui : Center YB = ~float(35,0,100)
+#@gui : Increment X = ~float(7,-10,10)
+#@gui : Increment Y = ~float(4,-10,10)
+#@gui : Increment XB = ~float(4,-10,10)
+#@gui : Increment YB = ~float(4,-10,10)
+#@gui : Inc Modifier  = ~int(1000,10,1000)
+#@gui : Starting Size = ~float(0,0,50)
+#@gui : Ratio = ~float(2,0.1,5)
+#@gui : Increment Size = float(4,1,10)
+#@gui : Angle Modifier = ~float(1,.01,10)
+#@gui : Add B Set = ~bool(1)
+#@gui : Invert B Direction = ~bool(1)
+#@gui : Opacity = float(.3,.01,1)
+#@gui : Line Pattern = text(0,0xFFFFFFFF)
+#@gui : Color 1 = ~color(0,0,0)
+#@gui : Color 2 = ~color(255,255,255)
+#@gui : sep = separator()
+#@gui : note = note("<small>Author: <i>Prawnsushi</i>.      Latest Update: <i>2025/01/30</i>.</small>")
+
+pr_sketchy_ellipses:
+foreach {
+  amount,x,y,xb,yb,SX,SY,SXB,SYB,boost,S,ratio,Rinc,angle,dbl,dir,op,pat=${1-18}
+  col1=${-6--4}
+  col2=${-3--1}
+  SX,SY,SXB,SYB/=$boost
+  Rinc/=100
+  repeat $amount {
+    opac:=u($op)
+    ang:=$>*$angle
+    if $dir Bang:=$<*$angle else Bang=$ang fi
+    repeat 4 {
+        nx,ny,nxb,nyb:=arg0($>,[$x,$y,$xb,$yb],[$x,$x,$xb,$xb],[$y,$x,$yb,$xb],[$y,$y,$yb,$yb])
+        ellipse[0] $nx%,$ny%,$S%,{$S*$ratio}%,$ang,$opac,$pat,$col1
+        if $dbl
+            ellipse[0] $nxb%,$nyb%,$S%,{$S*$ratio}%,$Bang,$opac,$pat,$col2
+        fi
+    }
+    x,y,xb,yb,S+=$SX,$SY,$SXB,$SYB,u($Rinc)
+  }
+  n 0,255
+}
+
+#@gui Kaleido Patterns : pr_kalpat, pr_kalpat(1)*
+#@gui : Description = note{"<span color="#EE5500"><b>Description:</b></span> \
+# Draws colored patterns on an image.
+#@gui : "}, sep = separator()
+#@gui : Seed = int(0,0,100000)
+#@gui : Amount = ~float(1,0.1,1.5)
+#@gui : Center X = ~float(50,0,100)
+#@gui : Center Y = ~float(50,0,100)
+#@gui : Size = ~choice(0,"Increase","Decrease")
+#@gui : Ratio = ~float(1,0.01,1)
+#@gui : Interpolation = choice(2,"Nearest","Linear,"Cubic")
+#@gui : Max Angle = ~int(180,0,360)
+#@gui : Rotations  = ~int(5,0,20)
+#@gui : Thickness = int(0,0,30)
+#@gui : Line Pattern = text(0,0xFFFFFFFF)
+#@gui : Grayscale = bool(0)
+#@gui : Custom Palette = filein("")
+#@gui : Max Pal. Colors = ~int(128,2,512)
+#@gui : Color 1 = ~color(255,0,0)
+#@gui : Color 2 = ~color(255,113,57)
+#@gui : Color 3 = ~color(255,255,0)
+#@gui : Color 4 = ~color(85,0,255)
+#@gui : Color 5 = ~color(0,0,255)
+#@gui : Color 6 = ~color(0,113,165)
+#@gui : Color 7 = ~color(85,170,0)
+#@gui : Color 8 = ~color(255,255,255)
+#@gui : Color 9 = ~color(255,0,0)
+#@gui : Color 10 = ~color(255,113,57)
+#@gui : Color 11 = ~color(255,255,0)
+#@gui : Color 12 = ~color(85,0,255)
+#@gui : Color 13 = ~color(0,0,255)
+#@gui : Color 14 = ~color(0,113,165)
+#@gui : Color 15 = ~color(85,170,0)
+#@gui : Color 16 = ~color(255,255,255)
+#@gui : sep = separator()
+#@gui : note = note("<small>Author: <i>Prawnsushi</i>.      Latest Update: <i>2025/01/22</i>.</small>")
+pr_kalpat: skip "${13=}"
+  seed,amount,cx,cy,size,ratio,interpol,ang,occ,thick,pat,gs,colnb=${1-12,14}
+  foreach {
+    to_rgb
+    width,occ:=w,abs($occ-15)
+    thick+=1
+
+    if $gs
+      256,1,1,3,x
+    elif isfile('"$13"')
+      "$13" rs. 512 colormap. $colnb
+    else
+      (${15--1}) r. 3,16,1,1,-1 permute. yzcx
+    fi
+    =>. PAL
+
+    if $seed srand $seed fi
+    repeat ($width-1)*$amount {
+        col:=I[#-1,$>,3]
+        if $size S:=$>+1 else S:=$<+1 fi
+        if $size>=$width/2 cy=50 fi
+        if $>%$occ==0
+          rotate[0] {u(0,$ang)},$interpol,3,{u(100)}%,{u(100)}%
+        fi
+        ellipse[0] $cx%,$cy%,$S,{$S*$ratio},{u($ang)},1,$pat,$col
+    }
+    rm[PAL]
+    if $thick>=1 dilate_circ $thick,1,1 fi
+    n 0,255
+    +mirror y a y +mirror x a x
+    rs 50%,0,6
+  }
+
+
+#@gui Fluffy Cloud : pr_fluffcloud, pr_fluffcloud(1)
+#@gui : Description = note{"<span color="#EE5500"><b>Description:</b></span> \
+# Draws positionable puffs of cloud on an image.
+#@gui : "}, sep = separator()
+#@gui : sep = separator()
+#@gui : note = note(Puffs Squadron:)
+#@gui : Puffy =   ~point(20,40,1,0,255,255,0,55,6)
+#@gui : Puffina = ~point(35,25,1,0,255,0,255,55,6)
+#@gui : Pufffel = ~point(50,40,1,0,0,0,255,55,6)
+#@gui : Puffio =  ~point(65,25,1,0,255,0,0,55,6)
+#@gui : Puffer =  ~point(80,40,1,0,0,255,0,55,6)
+#@gui : Puffed =  ~point(10,90,-1,0,255,255,0,155,6)
+#@gui : Puffeth = ~point(30,90,-1,0,255,0,255,155,6)
+#@gui : Puffilla =~point(50,90,-1,0,0,0,255,155,6)
+#@gui : Puffent = ~point(70,90,-1,0,255,0,0,155,6)
+#@gui : Puffor =  ~point(90,90,-1,0,0,255,0,155,6)
+#@gui : sep = separator()
+#@gui : note = note(Cotton Balls:)
+#@gui : Seed = int(0,0,100000)
+#@gui : Amount = int(500,100,1000)
+#@gui : Opacity = float(.02,.001,.1)
+#@gui : Max Size = float(10,1,20)
+#@gui : Max Ratio = float(1,.1,1)
+#@gui : Max Span = float(30,0,100)
+#@gui : Min Angle = float(0,0,180)
+#@gui : Max Angle = float(180,0,180)
+#@gui : Dilate (%)(slow) = float(.5,0,3)
+#@gui : Fuzziness = float(2,0,20)
+#@gui : F. Scale = float(200,1,250)
+#@gui : Blur = float(.2,0,2)
+#@gui : Spread X (%) = float(0,0,20)
+#@gui : Spread Y (%) = float(0,0,20)
+#@gui : Softening = float(0,0,100)
+#@gui : Sharpening = float(0,0,1000)
+#@gui : Local Norm = float(.2,0.1,5)
+#@gui : N. Smoothing = float(1,.01,5)
+#@gui : Do not blend = bool(0)
+#@gui : Blending Mode 1 = choice(17,"Add","Alpha","Average","Blue","Burn","Darken","Difference","Divide","Dodge",\
+# "Edges","Exclusion","Freeze","Grainextract","Grainmerge","Green","Hardlight","Hue","Interpolation",\
+# "Lchlightness","Lighten","Lightness","Linearburn","Linearlight","Luminance","Multiply","Negation",Overlay",\
+# "Pinlight","Red","Reflect","Saturation","Screen","Seamless","Seamless_mixed","Softburn","Softdodge","Softlight",\
+# "Stamp","Subtract","Value","Vividlight")
+#@gui : Value 1 = float(.9,0,1)
+#@gui : Blending Mode 2 = choice(31,"Add","Alpha","Average","Blue","Burn","Darken","Difference","Divide","Dodge",\
+# "Edges","Exclusion","Freeze","Grainextract","Grainmerge","Green","Hardlight","Hue","Interpolation",\
+# "Lchlightness","Lighten","Lightness","Linearburn","Linearlight","Luminance","Multiply","Negation",Overlay",\
+# "Pinlight","Red","Reflect","Saturation","Screen","Seamless","Seamless_mixed","Softburn","Softdodge","Softlight",\
+# "Stamp","Subtract","Value","Vividlight")
+#@gui : Value 2 = float(.9,0,1)
+#@gui : sep = separator()
+#@gui : note = note("<small>Author: <i>Prawnsushi</i>.      Latest Update: <i>2025/02/28</i>.</small>")
+pr_fluffcloud:
+foreach {
+  xa,ya,xb,yb,xc,yc,xd,yd,xe,ye,xf,yf,xg,yg,xh,yh,xi,yi,xj,yj,seed,amount,O,S,r,SP,mA,MA,dil,def,damp,blr,spx,spy,sof,sha,det,dsca,nope,bm1,bv1,bm2,bv2=${1--1}
+  bmodes=add,alpha,average,blue,burn,darken,difference,divide,dodge,\
+  edges,exclusion,freeze,grainextract,grainmerge,green,hardlight,hue,interpolation,\
+  lchlightness,lighten,lightness,linearburn,linearlight,luminance,multiply,negation,overlay,\
+  pinlight,red,reflect,saturation,screen,seamless,seamless_mixed,softburn,softdodge,softlight,\
+  stamp,subtract,value,vividlight
+  bm1=${"arg0 $bm1,"$bmodes}
+  bm2=${"arg0 $bm2,"$bmodes}
+  W,H:=w,h
+  store[0] BG
+  $W,$H,1,1
+  pat=0xFFFFFFFF
+  if $seed srand $seed fi
+  repeat $amount {
+    col:=u($>+100,255)
+    repeat 10 {
+      puffX,puffY:=arg0($>,[$xa,$ya],[$xb,$yb],[$xc,$yc],[$xd,$yd],[$xe,$ye],[$xf,$yf],[$xg,$yg],[$xh,$yh],[$xi,$yi],[$xj,$yj])
+      if !isnan($puffX)
+        nx,ny,s,ratio,ang,opac:=u($puffX-u($SP),$puffX+u($SP)),u($puffY-u($SP),$puffY+u($SP)),u(.1,$S),u(.1,$r),u($mA,$MA),u($O)
+        ellipse[0] $nx%,$ny%,$s%,{$s*$ratio}%,$ang,$opac,$col,$col,$col
+      fi
+    }
+  }
+  .
+  l. {
+    if $blr b xy,$blr%,0 fi
+    if $spx||$spy spread $spx%,$spy% fi
+    if $def foreach { pr_deform $def,$seed,$damp } fi
+  }
+  rm[0]
+  max
+  to_rgb
+  if $dil dilate_circ $dil% fi
+  +negate. +channels[0] 1 . a[0,-1] c a[1,-1] c
+  if $sof bilateral $sof,$sof,$sof,$sof fi
+  normalize_local $det,10,$dsca%,$dsca%
+  if $sha sharpen $sha fi
+  if !$nope $BG else (0^0^0^0) fi
+  r. [0],[0],100%,100%,6
+  if !$nope
+    rv
+    if $bv1 +blend[0,1] $bm1,$bv1 mv. 0 fi
+    rm[2] mv. 1  ..
+    if $bv2 blend $bm2,$bv2 fi
+  else
+    rv blend alpha
+  fi
+  n 0,255
+}
+
+
+#@cli pr_rndpat: _length,_prefix
+#@cli : Returns a random drawing pattern to use with 'line', 'polygon', etc.
+#@cli : _length : '1=>length<=16'.
+#@cli : _prefix : '1=0x' or '0=disabled'
+#@cli : If 'length>8' G'MIC will truncate and only use the last 8 characters when using line,spline,etc.
+#@cli : Using a pattern of '[9-16]' characters can be useful when using character shifting ('pr_offpat').
+#@cli : Default values: 'length=8','prefix=1'
+#@cli : $ 500,500,1,1 pat=${pr_rndpat\ 16} repeat h { line 0,$>,100%,$<,1,$pat,$> } n 0,255
+#@cli : $ 500,500,1,3 repeat h { pr_rndpat 8 line 0,$>,100%,$>,1,${},${-rgb} }
+pr_rndpat:
+    check  "${1=8}>=1 && ${1=8}<=16 && ${2=1}>=0 && ${2=1}<=1"
+    len,pat=$1,
+    hex=0,1,2,3,4,5,6,7,8,9,A,B,C,D,E,F
+    if $2==1 pre=0x else pre= fi
+    repeat $len { pat.=${"arg0 v(15),"$hex} }
+    u ""$pre$pat""
+
+
+#@cli pr_offpat: _pattern,_direction
+#@cli : A simple command to shift an hex pattern's characters positions.
+#@cli : _pattern: a string in the form '0x[1-9][A-F]'
+#@cli : _direction: a signed integer indicating shift direction '(<=-1:left,>=1:right,0:random)'.
+#@cli : $ 500,500,1,1 pat=0x1234567890ABCDEF repeat h { pr_offpat $pat,1 pat=${} line 0,$>,100%,$<,1,$pat,$> } n 0,255
+#@cli : $ 500,500,1,1 pat=0x90000000 repeat h { pr_offpat $pat,0 pat=${} ellipse 50%,50%,$>,$>,0,1,$pat,$> } n 0,255
+
+pr_offpat:
+if ${"is_pattern \"$1\""}
+    strreplace $1,0x, pat=${}
+    len=${strlen\ "$pat"}
+    if $2==0
+        if u>=.5 dir=-1 else dir=1 fi
+        dir*={v(1,$len)}
+    else
+        dir=$2
+    fi
+    pat:=shift(['$pat'],$dir,2)
+    pat=${dec2str\ "$pat"}
+    u ""0x$pat""
+else
+    e \"$1\"" is not a valid pattern"
+fi
+
+# (End of G'MIC custom commands)

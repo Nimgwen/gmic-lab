@@ -1,0 +1,32 @@
+# ---------- macOS ----------
+# Finder metadata, dropped automatically into any folder you open
+.DS_Store
+
+
+# ---------- Local-only working folders ----------
+# The folders themselves are kept in the repo so the structure described in
+# the README is visible. Their contents stay on this machine and in iCloud.
+
+# Source material — images now, HD video later
+/in/*
+!/in/.gitkeep
+
+# Reusable greyscale masks
+/masks/*
+!/masks/.gitkeep
+
+# Generated results — reproducible from the source files and the commands
+/out/*
+!/out/.gitkeep
+
+# Throwaway 25% working copies
+/proxy/*
+!/proxy/.gitkeep
+
+
+# ---------- Excluded outright ----------
+# Unused scratch scripts
+/Claude stuff/
+
+# 20 MB reference manual, re-downloadable from gmic.eu
+/gmic_reference.pdf

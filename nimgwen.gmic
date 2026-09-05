@@ -1,0 +1,181 @@
+#@gmic
+#----------------------------------------------------------------------
+#
+#  File        : nimgwen.gmic
+#                ( G'MIC commands file )
+#
+#  Description : Glitch and signal-corruption filters by nimgwen.
+#                Ports and reinterpretations of techniques from the
+#                generative/glitch art community, rebuilt as native G'MIC
+#                pipelines so they can be masked, modulated and composed
+#                with the rest of the language.
+#
+#  Copyright   : nimgwen
+#
+#  License     : CeCILL v2.0
+#                ( http://cecill.info/licences/Licence_CeCILL_V2-en.html )
+#
+#  This software is governed by the CeCILL  license under French law and
+#  abiding by the rules of distribution of free software.  You can  use,
+#  modify and/ or redistribute the software under the terms of the CeCILL
+#  license as circulated by CEA, CNRS and INRIA at the following URL
+#  "http://cecill.info".
+#
+#  As a counterpart to the access to the source code and  rights to copy,
+#  modify and redistribute granted by the license, users are provided only
+#  with a limited warranty  and the software's author,  the holder of the
+#  economic rights,  and the successive licensors  have only  limited
+#  liability.
+#
+#  In this respect, the user's attention is drawn to the risks associated
+#  with loading,  using,  modifying and/or developing or reproducing the
+#  software by the user in light of its specific status of free software,
+#  that may mean  that it is complicated to manipulate,  and  that  also
+#  therefore means  that it is reserved for developers  and  experienced
+#  professionals having in-depth computer knowledge. Users are therefore
+#  encouraged to load and test the software's suitability as regards their
+#  requirements in conditions enabling the security of their systems and/or
+#  data to be ensured and,  more generally, to use and operate it in the
+#  same conditions as regards security.
+#
+#  The fact that you are presently reading this means that you have had
+#  knowledge of the CeCILL license and that you accept its terms.
+#
+#----------------------------------------------------------------------
+
+#------------------------------------
+#@gui <b>Testing</b>
+#@gui <i>nimgwen</i>
+#------------------------------------
+
+#@gui About : _none_, _none_
+#@gui : note = note{"
+#@gui : <span foreground="purple"><b>nimgwen</b>'s filters for <b>G'MIC</b></span>\n\nGlitch and signal-corruption tools."}
+#@gui : sep = separator()
+#@gui : note = note{"<small>Filters stay under <i>Testing</i> until they are considered stable.</small>"}
+#@gui : sep = separator()
+
+#----------------------------------------------------------------------
+#
+#  FM Glitch
+#
+#  Port of "FM - frequency modulator" from Tomasz Sulej's GenerateMe
+#  collection of Processing sketches.
+#
+#    Original : https://github.com/tsulej/GenerateMe   ( fm/fm.pde )
+#               (c) 2016 Tomasz Sulej, generateme.blog@gmail.com
+#               http://generateme.tumblr.com
+#    Licence  : Unlicense ( http://unlicense.org/ ) - public domain
+#
+#  The original is an interactive sketch: carrier frequency is driven by
+#  mouse X, bandwidth by mouse Y, and the N key toggles negation. Those
+#  become arguments 1, 2 and 4 here, so results are reproducible instead
+#  of being found by waving a mouse around.
+#
+#  Algorithm, following the sketch's own description:
+#    - convert RGB into the chosen colourspace
+#    - for each channel: modulate the signal, quantise and dequantise it
+#      (when quantval > 0), demodulate using the derivative method, then
+#      run three lowpass filters in a chain to strip the carrier
+#    - recombine channels and convert back to RGB
+#
+#  Constants carried over verbatim from the sketch:
+#    min_omega     = 2*pi/(0.05*width)      finest carrier
+#    max_omega     = 2*pi/(300*width)       essentially DC
+#    phase_mult    = 0.05 .. 50             bandwidth range
+#    lowpass rate  = 100000, cutoffs at 0.25 / 0.1 / 0.05 of rate
+#    alpha         = dt/(tau+dt) -> 0.611046 / 0.385924 / 0.239057
+#
+#  This filter works on a single image and manages its own image list,
+#  so it is deliberately not wrapped in a 'foreach' block.
+#
+#----------------------------------------------------------------------
+
+#@gui FM Glitch : nim_fm_glitch, nim_fm_glitch_preview(0)
+#@gui : note = note("Frequency-modulates and demodulates each image row, producing flowing interference lines that follow the image's own structure.")
+#@gui : sep = separator()
+#@gui : note = note("<b>Carrier</b>")
+#@gui : Carrier = float(0.5,0,1)
+#@gui : Bandwidth = float(0.5,0,1)
+#@gui : Quantization = float(30,0,255)
+#@gui : sep = separator()
+#@gui : note = note("<b>Colour</b>")
+#@gui : Negate = bool(0)
+#@gui : Colour Space = choice("RGB","YCbCr","Lab","HSV")
+#@gui : First Channel Only = bool(0)
+#@gui : sep = separator()
+#@gui : note = note("<b>Carrier Removal</b>")
+#@gui : Lowpass 1 = bool(1)
+#@gui : Lowpass 2 = bool(1)
+#@gui : Lowpass 3 = bool(1)
+#@gui : sep = separator()
+#@gui : Blend With Original = float(0,0,1)
+#@gui : sep = separator(), Preview Type = choice("Full","Forward Horizontal","Forward Vertical","Backward Horizontal","Backward Vertical","Duplicate Top","Duplicate Left","Duplicate Bottom","Duplicate Right","Duplicate Horizontal","Duplicate Vertical","Checkered","Checkered Inverse"), Preview split = point(50,50,0,0,200,200,200,0,10)_0
+#@gui : sep = separator(), note = note("<small>Author : <i>nimgwen</i>.      After Tomasz Sulej's GenerateMe <i>FM</i>.</small>")
+
+#@cli nim_fm_glitch : _carrier,_bandwidth,_quantval>=0,_negate={0|1},_colorspace={0:RGB|1:YCbCr|2:Lab|3:HSV},\
+# _first_channel_only={0|1},_lp1={0|1},_lp2={0|1},_lp3={0|1},_blend_opacity
+#@cli : Frequency-modulate and demodulate each image row, as in Tomasz Sulej's Processing "FM" sketch.
+#@cli : 'carrier' and 'bandwidth' both run 0..1 and correspond to the sketch's mouse X and Y.
+#@cli : carrier=0 gives the finest carrier, carrier=1 approaches DC. quantval=0 disables quantization.
+#@cli : Default values: 'carrier=0.5', 'bandwidth=0.5', 'quantval=30', 'negate=0', 'colorspace=0',
+#@cli :   'first_channel_only=0', 'lp1=1', 'lp2=1', 'lp3=1' and 'blend_opacity=0'.
+#@cli : $ image.jpg nim_fm_glitch 0.05,0.25,30
+
+nim_fm_glitch : skip ${1=0.5},${2=0.5},${3=30},${4=0},${5=0},${6=0},${7=1},${8=1},${9=1},${10=0}
+  to_rgb
+
+  # --- $1 carrier, $2 bandwidth: mapped exactly as the sketch maps mouse X/Y ---
+  # The names read backwards on purpose: min_omega is numerically the LARGER
+  # value, because a short wavelength means a high angular frequency.
+  # Interpolating from min_omega toward max_omega therefore runs fine -> coarse,
+  # which is why carrier=0 is the finest setting and carrier=1 approaches DC.
+  W={w}
+  min_omega={2*pi/(0.05*$W)}           # finest carrier: wavelength 5% of a row
+  max_omega={2*pi/(300*$W)}            # essentially DC: wavelength 300x a row
+  OM={$min_omega+sqrt($1)*($max_omega-$min_omega)}
+  # sqrt() spreads the useful range across the low end of the slider, as in the
+  # sketch. Most of the interesting territory sits below carrier=0.2.
+  MP={(0.05+($2)^2*(50-0.05))*$OM}     # max_phase = phase_mult * omega
+  # Bandwidth is squared, so response is gentle near 0 and violent near 1.
+
+  # --- $7 $8 $9: three one-pole lowpass filters, chained, to strip the carrier ---
+  # alpha = dt/(tau+dt) at rate=100000 with cutoffs 0.25 / 0.1 / 0.05 of rate.
+  # Switching a filter off substitutes alpha=1, which passes the signal through
+  # untouched. Turning all three off leaves the raw carrier visible.
+  A1={$7?0.611046:1} A2={$8?0.385924:1} A3={$9?0.239057:1}
+
+  # --- $10: keep a pristine copy for the optional blend at the end ---
+  if $10 +to_rgb[0] fi
+
+  # --- $5: colourspace. Modulating chroma rather than RGB shifts the character
+  # from hard rainbow fringing toward softer tonal banding. ---
+  if $5==1 rgb2ycbcr elif $5==2 rgb2lab elif $5==3 rgb2hsv fi
+
+  # Sequential '>' evaluation walks c, then y, then x, so per-row state resets
+  # on x==0 and each row integrates left to right. That is what makes the effect
+  # follow image structure instead of sitting on top of it.
+  fill[0] ">
+    if("{$6}"&&c>0, i,
+      if(x==0, p1=p2=p3="{$MP}"*(2*i/255-1); si=0; pm=0);
+      si+="{$MP}"*(2*i/255-1);
+      m=cos("{$OM}"*x+si);
+      Q="{$3}"; if(Q>0, m=int((m+1)/2*Q)/Q*2-1);
+      dm=abs(m-pm); pm=m;
+      p1=dm*"{$A1}"+p1*(1-"{$A1}"); dm=p1;
+      p2=dm*"{$A2}"+p2*(1-"{$A2}"); dm=p2;
+      p3=dm*"{$A3}"+p3*(1-"{$A3}"); dm=p3;
+      v=cut((2*(dm-"{$OM}")+"{$MP}")/(2*"{$MP}")*255,0,255);
+      "{$4}"?255-v:v)"
+
+  if $5==1 ycbcr2rgb elif $5==2 lab2rgb elif $5==3 hsv2rgb fi
+
+  if $10 blend[0,1] overlay,$10 fi
+
+nim_fm_glitch_preview :
+  gui_split_preview "nim_fm_glitch ${1-10}",${-3--1}
+
+#@gui __
+# ^ Exits the 'Testing / nimgwen' folder, back to the root of the filter tree.
+
+# (End of G'MIC custom commands)
