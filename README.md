@@ -9,9 +9,9 @@ out/      generated results
 masks/    reusable greyscale masks
 include/  community filter sources, 28 contributor files (reference only, not loaded)
 ```
-# ---------- Local-only working folders ----------
-# `in`,`proxy`,`out`,`masks` folders themselves are kept in the repo so the structure described in
-# the README is visible. Their contents stay on my machine and copies in iCloud.
+**---------- Local-only working folders ----------**
+**`in`,`proxy`,`out`,`masks` folders themselves are kept in the repo so the structure described in**
+**the README is visible. Their contents stay on my machine and copies in iCloud.**
 
 ---
 

@@ -122,3 +122,5 @@ gmic sp colorful nim_fm_glitch 0.5,0.5,1000 -o out/fm.png
 
 gmic sp colorful,1600,1600 nim_fm_glitch 0.5,0.5,1000 -o out/fm_big.png
 #higher resolution just makes it sharper, lower softer/more diffuse
+
+gmic sp peppers,1600,1600 nim_fm_glitch 0.5,0.5,10 negate fx_blur_bloom_glare 1,4,5,1,2,0,1,1,5,0.5,0,0 -o out/bottles.png
